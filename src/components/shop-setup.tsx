@@ -105,8 +105,8 @@ export function DeleteShopButton({
       router.push("/vendor");
       router.refresh();
     } catch (e) {
+      // Stay on the confirm step so the error stays visible.
       setError(e instanceof Error ? e.message : "Could not remove shop.");
-      setConfirming(false);
       setBusy(false);
     }
   }
