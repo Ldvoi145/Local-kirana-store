@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getShops, searchProducts } from "@/lib/dal";
+import { getSession, getShops, searchProducts } from "@/lib/dal";
 import { AddButton } from "@/components/add-button";
 import { StockStamp } from "@/components/stock-stamp";
 
@@ -12,16 +12,22 @@ export default async function Home({
 }) {
   const { q } = await searchParams;
   const query = (q ?? "").trim();
+  const { user, profile } = await getSession();
+  const firstName =
+    profile?.name?.trim().split(/\s+/)[0] ??
+    user?.email?.split("@")[0] ??
+    null;
 
   return (
     <div className="space-y-8">
       <section className="rounded-2xl text-white p-6 sm:p-8 bg-gradient-to-br from-leaf-deep via-leaf to-jamun shadow-pop">
         <h1 className="font-display font-bold text-3xl sm:text-4xl leading-tight">
-          Tonight&apos;s dinner starts at the shop next door.
+          {firstName ? `Welcome back, ${firstName}.` : "Tonight's dinner starts at the shop next door."}
         </h1>
         <p className="mt-2 text-white/80 max-w-2xl">
-          Check live stock at neighbourhood kiranas, order for pickup or
-          home delivery, and reorder staples in one tap.
+          {firstName
+            ? "Your shops are stocked and your presets are one tap away."
+            : "Check live stock at neighbourhood kiranas, order for pickup or home delivery, and reorder staples in one tap."}
         </p>
       </section>
 

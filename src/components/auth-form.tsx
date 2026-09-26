@@ -17,11 +17,11 @@ function AuthForm({
   return (
     <div className="max-w-md mx-auto rounded-2xl bg-counter border border-line p-6">
       <h1 className="font-display font-bold text-2xl">
-        {mode === "login" ? "Welcome back" : "Join your neighbourhood store"}
+        {mode === "login" ? "Log in" : "Join your neighbourhood store"}
       </h1>
       <p className="text-sm text-ink-soft mt-1">
         {mode === "login"
-          ? "Log in to order, track orders, and save presets."
+          ? "Enter your account to order, track orders, and save presets."
           : "One account works at every kirana on the street."}
       </p>
       <form action={dispatch} className="mt-4 space-y-3">
