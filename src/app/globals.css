@@ -1,33 +1,36 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand is jamun plum + ember copper + turmeric. The `leaf` token name is
-     kept for class stability but holds plum, so no green remains in the UI. */
-  --color-leaf: #5c1f38;
-  --color-leaf-deep: #381222;
-  --color-jamun: #9a3b26;
-  --color-jamun-deep: #2a0e1b;
-  --color-marigold: #f2a007;
-  --color-marigold-deep: #b56e02;
-  --color-marigold-soft: #fce9bd;
-  --color-ledger: #f6f0e1;
-  --color-counter: #fffdf7;
-  --color-ink: #251b12;
-  --color-ink-soft: #5d5347;
+  /* Kirana eStore marketplace system: deep green + warm yellow + cream.
+     Token names predate the rebrand; values below are the new direction. */
+  --color-leaf: #176b4d;
+  --color-leaf-deep: #0f5138;
+  --color-jamun: #0f5138;
+  --color-jamun-deep: #0b3d2a;
+  --color-marigold: #f5b700;
+  --color-marigold-deep: #8f6600;
+  --color-marigold-soft: #fdf0c3;
+  --color-ledger: #fff9ed;
+  --color-counter: #ffffff;
+  --color-ink: #222222;
+  --color-ink-soft: #66736d;
+  --color-fresh: #218739;
   --color-chili: #b3261e;
-  --color-line: #e3d7bd;
-  --font-display: "Baloo 2", "Nunito", system-ui, sans-serif;
+  --color-line: #e7dfc8;
+  --font-display: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  --shadow-lift: 0 1px 2px rgb(56 18 34 / 0.08), 0 8px 24px -12px rgb(56 18 34 / 0.28);
-  --shadow-pop: 0 2px 6px rgb(56 18 34 / 0.14), 0 16px 40px -16px rgb(154 59 38 / 0.4);
+  --shadow-lift: 0 1px 2px rgb(15 81 56 / 0.07), 0 10px 28px -14px rgb(15 81 56 / 0.28);
+  --shadow-pop: 0 2px 8px rgb(15 81 56 / 0.1), 0 18px 44px -18px rgb(15 81 56 / 0.3);
+  --radius-card: 1rem;
+  --radius-control: 0.625rem;
 }
 
 body {
-  background:
-    radial-gradient(rgb(92 31 56 / 0.06) 1px, transparent 1px) 0 0 / 22px 22px,
-    var(--color-ledger);
+  background: var(--color-ledger);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 ::selection {
@@ -36,8 +39,9 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-marigold-deep);
+  outline: 2px solid var(--color-leaf);
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Flat paper by default; shadow answers touch, hover, focus. */
@@ -47,6 +51,7 @@ body {
 .lift:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lift);
+  border-color: #d8cfb2;
 }
 .lift:active {
   transform: translateY(0);
@@ -54,6 +59,22 @@ body {
 
 button:disabled {
   cursor: not-allowed;
+}
+
+/* Tabular figures for prices, quantities, totals. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+input,
+select,
+textarea {
+  background-color: var(--color-counter);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8a938c;
 }
 
 @media (prefers-reduced-motion: reduce) {

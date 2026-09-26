@@ -27,27 +27,28 @@ export function SiteHeader({
   }
 
   return (
-    <header className="bg-gradient-to-r from-leaf-deep via-leaf to-jamun text-white sticky top-0 z-10 shadow">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
-        <Link href="/" className="flex items-center gap-2">
+    <header className="bg-leaf-deep text-white sticky top-0 z-10 shadow-md">
+      <div className="max-w-6xl mx-auto px-4 pt-3 pb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="Kirana eStore home">
           <span
             aria-hidden
-            className="grid place-items-center w-9 h-9 rounded-lg bg-marigold text-ink font-display font-extrabold text-xl shadow"
+            className="grid place-items-center w-9 h-9 rounded-lg bg-marigold text-leaf-deep font-display font-extrabold text-xl"
           >
             क
           </span>
           <span className="leading-tight">
-            <span className="block font-display font-bold text-xl">
+            <span className="block font-display font-bold text-lg tracking-tight">
               Kirana eStore
             </span>
-            <span className="block text-white/70 text-xs">
+            <span className="hidden sm:block text-white/65 text-xs">
               Your local shops. One digital store.
             </span>
           </span>
         </Link>
 
         <form
-          className="flex flex-1 min-w-52 max-w-xl mx-auto"
+          role="search"
+          className="flex w-full sm:w-auto sm:flex-1 sm:max-w-xl sm:mx-auto order-last sm:order-none"
           onSubmit={(e) => {
             e.preventDefault();
             if (query.trim()) router.push(`/?q=${encodeURIComponent(query.trim())}`);
@@ -56,34 +57,40 @@ export function SiteHeader({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search shops, atta, milk, dal"
+            placeholder="Search shops, atta, milk, dal…"
             aria-label="Search shops and products"
-            className="flex-1 rounded-l-lg px-3 py-1.5 text-ink bg-counter text-sm"
+            className="flex-1 min-w-0 rounded-l-lg border-2 border-r-0 border-marigold px-3 py-1.5 text-ink text-sm"
           />
           <button
             type="submit"
             aria-label="Search"
-            className="rounded-r-lg bg-counter text-ink font-semibold px-4 text-sm hover:bg-white flex items-center gap-1.5"
+            className="rounded-r-lg bg-marigold text-ink font-bold px-4 text-sm hover:brightness-95 active:brightness-90 flex items-center gap-1.5 border-2 border-marigold"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
               <circle cx="11" cy="11" r="7" />
               <line x1="16.5" y1="16.5" x2="21" y2="21" />
             </svg>
-            Search
+            <span className="hidden md:inline">Search</span>
           </button>
         </form>
 
-        <nav className="flex items-center gap-2 text-sm ml-auto">
+        <nav className="flex items-center gap-2 text-sm ml-auto" aria-label="Account">
           <Link
             href="/cart"
-            className="rounded-lg border border-white/40 px-3 py-1.5 hover:bg-white/10"
+            className="rounded-lg border border-white/35 px-3 py-1.5 hover:bg-white/10 focus-visible:outline-white"
           >
-            Cart · {count}
+            Cart
+            <span
+              aria-label={`${count} items in cart`}
+              className="ml-1.5 inline-grid place-items-center min-w-5 h-5 px-1 rounded-full bg-marigold text-ink text-xs font-bold tnum"
+            >
+              {count}
+            </span>
           </Link>
           {role === "vendor" && (
             <Link
               href="/vendor"
-              className="rounded-lg bg-marigold text-ink font-semibold px-3 py-1.5 hover:brightness-95"
+              className="rounded-lg bg-white/10 border border-white/25 px-3 py-1.5 font-semibold hover:bg-white/15"
             >
               Vendor
             </Link>
@@ -91,7 +98,7 @@ export function SiteHeader({
           {role === "customer" && (
             <Link
               href="/presets"
-              className="rounded-lg border border-white/40 px-3 py-1.5 hover:bg-white/10"
+              className="rounded-lg border border-white/35 px-3 py-1.5 hover:bg-white/10"
             >
               Presets
             </Link>
@@ -99,14 +106,14 @@ export function SiteHeader({
           {user ? (
             <button
               onClick={signOut}
-              className="rounded-lg border border-white/40 px-3 py-1.5 hover:bg-white/10"
+              className="rounded-lg border border-white/35 px-3 py-1.5 hover:bg-white/10"
             >
               Log out
             </button>
           ) : (
             <Link
               href="/login"
-              className="rounded-lg bg-counter text-ink font-semibold px-3 py-1.5 hover:bg-white/90"
+              className="rounded-lg bg-white text-leaf-deep font-bold px-3 py-1.5 hover:bg-ledger"
             >
               Log in
             </Link>

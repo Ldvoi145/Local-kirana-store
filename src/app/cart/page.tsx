@@ -66,8 +66,8 @@ export default function CartPage() {
           {lines.map((l) => (
             <li key={l.product_id} className="flex items-center gap-3 p-4">
               <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">{l.name}</p>
-                <p className="text-sm text-ink-soft">
+                <p className="font-semibold text-[15px] truncate">{l.name}</p>
+                <p className="text-[13px] text-ink-soft tnum">
                   ₹{l.price.toFixed(2)} / {l.unit}
                 </p>
               </div>
@@ -88,7 +88,7 @@ export default function CartPage() {
                   +
                 </button>
               </div>
-              <span className="w-20 text-right font-bold">
+              <span className="w-20 text-right font-bold tnum">
                 ₹{(l.price * l.quantity).toFixed(2)}
               </span>
               <button
@@ -104,7 +104,7 @@ export default function CartPage() {
           <button onClick={clear} className="text-sm text-ink-soft hover:underline">
             Clear cart
           </button>
-          <p className="font-display font-bold text-xl">₹{total.toFixed(2)}</p>
+          <p className="font-display font-bold text-xl tnum">₹{total.toFixed(2)}</p>
         </div>
       </section>
 
@@ -157,9 +157,9 @@ export default function CartPage() {
         <button
           onClick={placeOrder}
           disabled={busy}
-          className="w-full rounded-lg bg-marigold text-ink font-bold py-2.5 hover:brightness-95 disabled:opacity-50"
+          className="w-full rounded-lg bg-leaf text-white font-bold py-2.5 hover:bg-leaf-deep active:bg-leaf-deep disabled:opacity-50 tnum"
         >
-          {busy ? "Placing order" : `Place order · ₹${total.toFixed(2)}`}
+          {busy ? "Placing order…" : `Place order · ₹${total.toFixed(2)}`}
         </button>
         <div className="border-t border-line pt-4">
           <h3 className="font-semibold text-sm">Save this cart as a preset</h3>
@@ -174,7 +174,7 @@ export default function CartPage() {
             <button
               onClick={save}
               disabled={busy || !presetName.trim()}
-              className="rounded-lg bg-leaf text-white text-sm font-semibold px-4 hover:bg-leaf-deep disabled:opacity-50"
+              className="rounded-lg bg-counter border border-leaf text-leaf text-sm font-semibold px-4 hover:bg-leaf/5 active:bg-leaf/10 disabled:opacity-50"
             >
               Save
             </button>

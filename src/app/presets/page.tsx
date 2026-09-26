@@ -58,7 +58,7 @@ export default async function PresetsPage() {
         </div>
         <Link
           href="/"
-          className="rounded-lg bg-marigold text-ink text-sm font-bold px-4 py-2 hover:brightness-95"
+          className="rounded-lg bg-leaf text-white text-sm font-bold px-4 py-2 hover:bg-leaf-deep"
         >
           New preset — pick a shop
         </Link>

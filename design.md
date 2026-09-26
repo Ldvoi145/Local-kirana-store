@@ -24,45 +24,50 @@ This world serves two tasks. Neighbours scan shops and reorder staples in second
 
 ## Colors
 
-Restrained strategy: green-tinted ledger neutrals plus one marigold accent. The accent marks the primary action only.
+Grocery-marketplace system: deep green owns brand surfaces and primary actions, warm yellow is a rare highlight, cream carries the page.
 
 ### Primary
 
-- **Deep Kirana Leaf** (#0E4D2B): shop header field, primary buttons, vendor dashboard frame. White text sits on it.
+- **Deep Market Green** (#176B4D): primary buttons, active nav, key prices accents. White text sits on it.
+- **Dark Store Green** (#0F5138): header, footer, hero fields. White text sits on it.
 
-### Secondary
+### Accent (rare)
 
-- **Turmeric Marigold** (#D9930D): the single next action such as reorder or restock, plus low-stock stamps. Ink text sits on it.
+- **Warm Mustard** (#F5B700): brand mark, search submit, low-stock stamps. Ink text sits on it. At most one yellow action per viewport.
 
 ### Neutral
 
-- **Ledger Paper** (#EAF0E2): application ground, a green-tinted khata page rather than warm cream.
-- **Counter White** (#FFFFFF): cards and ticket surfaces that sit on the ledger ground.
-- **Shop Ink** (#17211B): body text, prices, headings.
+- **Warm Cream** (#FFF9ED): application ground.
+- **Counter White** (#FFFFFF): cards and ticket surfaces.
+- **Shop Ink** (#222222): body text, prices, headings.
+- **Soft Sage** (#66736D): secondary metadata.
+- **Fresh Green** (#218739): open/in-stock marks with dark-green text.
 - **Chili Red** (#B3261E): out-of-stock and error states only.
+- **Warm Line** (#E7DFC8): hairline borders.
 
 ### Named Rules
 
-**The One Voice Rule.** The marigold accent owns at most one action per viewport. Its rarity is the point.
+**The One Voice Rule.** The yellow accent owns at most one action per viewport. Its rarity is the point.
 
 ## Typography
 
-**Display Font:** Baloo 2 (with system rounded fallback)
-**Body Font:** system-ui stack (with Segoe UI, Roboto, Arial fallback)
+**Display Font:** Plus Jakarta Sans (600–800) for brand, headings, and figures.
+**Body Font:** system-ui stack (with Segoe UI, Roboto, Arial fallback) for ordering work.
 
-**Character:** The display face borrows the rounded confidence of hand-painted shop signage for shop names and big rate-board figures. The system stack does all ordering work so labels stay familiar and fast.
+**Character:** A clean modern grotesque carries shop names and prices with tight tracking; the system stack does all form and transaction work so labels stay familiar and fast.
 
 ### Hierarchy
 
-- **Display** (700, [to be resolved during implementation]): shop names and hero rate figures only.
-- **Headline** (700, [to be resolved during implementation]): section titles in storefront and vendor dashboard.
-- **Title** (600, [to be resolved during implementation]): product names and order rows.
-- **Body** (400, [to be resolved during implementation], 65–75ch): descriptions, addresses, helper text.
-- **Label** (600, [to be resolved during implementation]): stock stamps, status marks, form labels in sentence case.
+- **Page title** (700, ~28–30px, tight): one per page.
+- **Section title** (700, 20px): shop lists, rate boards, dashboard blocks.
+- **Card title** (700, 18px): shop names, preset names.
+- **Body** (400, 15px): descriptions, addresses, helper text.
+- **Metadata** (400–600, 12–13px): timings, counts, stamps, status marks in sentence case.
+- **Button text** (600–700, 14px): primary deep-green/white, secondary white/green-border, yellow only for search and rare highlights.
 
 ### Named Rules
 
-**The Signage Stays on the Sign Rule.** Baloo 2 names shops and figures. Buttons, inputs, and table data stay in the system face.
+**The Signage Rule.** Plus Jakarta Sans names shops and figures with tight tracking. Buttons, inputs, and table data stay in the system face.
 
 ## Layout
 

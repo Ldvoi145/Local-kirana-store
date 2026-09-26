@@ -49,7 +49,7 @@ export function PresetList({ presets }: { presets: Preset[] }) {
         </p>
         <Link
           href="/"
-          className="mt-3 inline-block rounded-lg bg-marigold text-ink text-sm font-bold px-4 py-2 hover:brightness-95"
+          className="mt-3 inline-block rounded-lg bg-leaf text-white text-sm font-bold px-4 py-2 hover:bg-leaf-deep"
         >
           Browse shops to build one
         </Link>
@@ -103,7 +103,7 @@ export function PresetList({ presets }: { presets: Preset[] }) {
                 <button
                   onClick={() => load(p)}
                   disabled={lines.length === 0 || loading}
-                  className="rounded-lg bg-marigold text-ink text-sm font-bold px-4 py-2 hover:brightness-95 disabled:opacity-50"
+                  className="rounded-lg bg-leaf text-white text-sm font-bold px-4 py-2 hover:bg-leaf-deep active:bg-leaf-deep disabled:opacity-50"
                 >
                   {loading ? "Loading…" : "Order again"}
                 </button>

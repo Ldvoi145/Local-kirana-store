@@ -63,12 +63,16 @@ export default async function ShopPage({
             <p className="mt-1 text-sm">{shop.description}</p>
           </div>
           <span
-            className={`shrink-0 rounded-full text-xs font-semibold px-2.5 py-0.5 border ${
+            className={`shrink-0 inline-flex items-center gap-1.5 rounded-full text-xs font-semibold px-2.5 py-1 border ${
               shop.is_open
-                ? "bg-leaf/10 text-leaf border-leaf/30"
+                ? "bg-fresh/10 text-leaf-deep border-fresh/40"
                 : "bg-ink/5 text-ink-soft border-line"
             }`}
           >
+            <span
+              aria-hidden
+              className={`w-1.5 h-1.5 rounded-full ${shop.is_open ? "bg-fresh" : "bg-ink-soft"}`}
+            />
             {shop.is_open ? "Open" : "Closed"}
           </span>
         </div>
@@ -111,9 +115,12 @@ export default async function ShopPage({
       )}
 
       <section className="rounded-2xl bg-counter border border-line overflow-hidden">
-        <h2 className="font-display font-bold text-xl px-4 pt-4">
-          Rate board · {visible.length} items
-        </h2>
+        <div className="flex items-baseline justify-between px-4 pt-4">
+          <h2 className="font-display font-bold text-xl tracking-tight">
+            Shop inventory
+          </h2>
+          <p className="text-xs text-ink-soft tnum">{visible.length} items</p>
+        </div>
         {visible.length === 0 ? (
           <p className="p-8 text-center text-ink-soft text-sm">
             Nothing on the board matches. Clear the search to see everything.
@@ -121,11 +128,13 @@ export default async function ShopPage({
         ) : (
           <ul className="divide-y divide-line">
             {visible.map((p) => (
-              <li key={p.id} className="flex items-center gap-3 p-4">
+              <li key={p.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{p.name}</p>
-                  <p className="text-sm text-ink-soft">
-                    {p.category} · ₹{Number(p.price).toFixed(2)} / {p.unit}
+                  <p className="font-semibold text-[15px] truncate">{p.name}</p>
+                  <p className="text-[13px] text-ink-soft">
+                    {p.category} ·{" "}
+                    <span className="font-bold text-ink tnum">₹{Number(p.price).toFixed(2)}</span>
+                    {" / "}{p.unit}
                   </p>
                 </div>
                 <StockStamp

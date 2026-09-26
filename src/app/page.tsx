@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSession, getShops, searchProducts } from "@/lib/dal";
 import { AddButton } from "@/components/add-button";
 import { StockStamp } from "@/components/stock-stamp";
+import type { Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -18,65 +19,101 @@ export default async function Home({
     user?.email?.split("@")[0] ??
     null;
 
+  const shops = await getShops();
+  const openNow = shops.filter((s) => s.is_open).length;
+
   return (
-    <div className="space-y-8">
-      <section className="rounded-2xl text-white p-6 sm:p-8 bg-gradient-to-br from-leaf-deep via-leaf to-jamun shadow-pop">
-        <h1 className="font-display font-bold text-3xl sm:text-4xl leading-tight">
-          {firstName ? `Welcome back, ${firstName}.` : "Tonight's dinner starts at the shop next door."}
-        </h1>
-        <p className="mt-2 text-white/80 max-w-2xl">
-          {firstName
-            ? "Your shops are stocked and your presets are one tap away."
-            : "Check live stock at neighbourhood kiranas, order for pickup or home delivery, and reorder staples in one tap."}
-        </p>
+    <div className="space-y-6">
+      <section className="rounded-2xl bg-leaf-deep text-white px-5 py-5 sm:px-6 overflow-hidden">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="max-w-xl">
+            <h1 className="font-display font-bold text-2xl sm:text-[28px] leading-snug tracking-tight">
+              {firstName ? `Welcome back, ${firstName}.` : "Tonight's dinner starts at the shop next door."}
+            </h1>
+            <p className="mt-1 text-white/75 text-sm">
+              {firstName
+                ? "Your shops are stocked and your presets are one tap away."
+                : "Check live stock at neighbourhood kiranas, order for pickup or home delivery, and reorder staples in one tap."}
+            </p>
+          </div>
+          {shops.length > 0 && (
+            <dl className="flex gap-2 text-center" aria-label="Shop availability">
+              <div className="rounded-xl bg-white/10 px-3 py-1.5">
+                <dt className="sr-only">Shops</dt>
+                <dd className="font-display font-bold text-lg leading-none tnum">{shops.length}</dd>
+                <dd className="text-white/65 text-xs">shops</dd>
+              </div>
+              <div className="rounded-xl bg-white/10 px-3 py-1.5">
+                <dt className="sr-only">Open now</dt>
+                <dd className="font-display font-bold text-lg leading-none tnum">{openNow}</dd>
+                <dd className="text-white/65 text-xs">open now</dd>
+              </div>
+            </dl>
+          )}
+        </div>
       </section>
 
       {query ? (
-        <SearchResults query={query} />
+        <SearchResults query={query} shops={shops} />
       ) : (
-        <ShopList />
+        <ShopList shops={shops} />
       )}
     </div>
   );
 }
 
-async function ShopList() {
-  const shops = await getShops();
+type ShopSummary = Awaited<ReturnType<typeof getShops>>[number];
+
+function ShopList({ shops }: { shops: ShopSummary[] }) {
   if (shops.length === 0)
-    return <EmptyState text="No shops yet. Vendors add their first store from the Vendor page." />;
+    return (
+      <EmptyState
+        title="No shops yet"
+        text="Vendors add their first store from the Vendor page, and it will appear here."
+      />
+    );
   return (
     <section className="space-y-3">
-      <h2 className="font-display font-bold text-2xl">Nearby shops</h2>
+      <div className="flex items-baseline justify-between">
+        <h2 className="font-display font-bold text-xl tracking-tight">Nearby shops</h2>
+        <p className="text-xs text-ink-soft tnum">{shops.length} nearby</p>
+      </div>
       <ul className="grid gap-3 sm:grid-cols-2">
         {shops.map((s) => (
           <li
             key={s.id}
-            className="rounded-2xl bg-counter border border-line p-5 lift"
+            className="rounded-2xl bg-counter border border-line p-5 lift flex flex-col"
           >
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="font-display font-bold text-xl">{s.name}</h3>
-                <p className="text-sm text-ink-soft">{s.address}</p>
-                <p className="text-sm text-ink-soft">{s.timings}</p>
+              <div className="min-w-0">
+                <h3 className="font-display font-bold text-lg leading-snug tracking-tight truncate">{s.name}</h3>
+                <p className="mt-0.5 text-[13px] text-ink-soft truncate">{s.address}</p>
+                <p className="text-[13px] text-ink-soft">{s.timings}</p>
               </div>
               <span
-                className={`rounded-full text-xs font-semibold px-2.5 py-0.5 border ${
+                className={`shrink-0 inline-flex items-center gap-1.5 rounded-full text-xs font-semibold px-2.5 py-1 border ${
                   s.is_open
-                    ? "bg-leaf/10 text-leaf border-leaf/30"
+                    ? "bg-fresh/10 text-leaf-deep border-fresh/40"
                     : "bg-ink/5 text-ink-soft border-line"
                 }`}
               >
+                <span
+                  aria-hidden
+                  className={`w-1.5 h-1.5 rounded-full ${s.is_open ? "bg-fresh" : "bg-ink-soft"}`}
+                />
                 {s.is_open ? "Open" : "Closed"}
               </span>
             </div>
-            <p className="mt-2 text-sm">{s.description}</p>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-sm text-ink-soft">
-                {s.product_count} items on the board
+            {s.description && (
+              <p className="mt-2 text-sm text-ink-soft line-clamp-2">{s.description}</p>
+            )}
+            <div className="mt-3 pt-3 border-t border-line flex items-center justify-between gap-2">
+              <span className="text-[13px] text-ink-soft tnum">
+                {s.product_count} items
               </span>
               <Link
                 href={`/shop/${s.id}`}
-                className="rounded-lg bg-leaf text-white text-sm font-semibold px-4 py-2 hover:bg-leaf-deep"
+                className="rounded-lg bg-leaf text-white text-sm font-semibold px-4 py-2 hover:bg-leaf-deep active:bg-leaf-deep"
               >
                 Shop inventory →
               </Link>
@@ -88,11 +125,8 @@ async function ShopList() {
   );
 }
 
-async function SearchResults({ query }: { query: string }) {
-  const [results, shops] = await Promise.all([
-    searchProducts(query),
-    getShops(),
-  ]);
+async function SearchResults({ query, shops }: { query: string; shops: ShopSummary[] }) {
+  const results = await searchProducts(query);
   const q = query.toLowerCase();
   const matchingShops = shops.filter(
     (s) =>
@@ -100,10 +134,10 @@ async function SearchResults({ query }: { query: string }) {
       (s.address ?? "").toLowerCase().includes(q),
   );
   return (
-    <section className="space-y-3">
+    <section className="space-y-4">
       {matchingShops.length > 0 && (
         <div className="rounded-2xl bg-counter border border-line p-4">
-          <h2 className="font-display font-bold text-xl">
+          <h2 className="font-display font-bold text-lg tracking-tight">
             Shops matching “{query}”
           </h2>
           <ul className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -113,38 +147,29 @@ async function SearchResults({ query }: { query: string }) {
                   href={`/shop/${s.id}`}
                   className="flex items-center justify-between gap-2 rounded-xl border border-line px-3 py-2 hover:bg-ledger"
                 >
-                  <span>
-                    <span className="block font-semibold">{s.name}</span>
-                    <span className="block text-xs text-ink-soft">{s.address}</span>
+                  <span className="min-w-0">
+                    <span className="block font-semibold truncate">{s.name}</span>
+                    <span className="block text-xs text-ink-soft truncate">{s.address}</span>
                   </span>
-                  <span aria-hidden>→</span>
+                  <span aria-hidden className="text-leaf font-bold">→</span>
                 </Link>
               </li>
             ))}
           </ul>
         </div>
       )}
-      <h2 className="font-display font-bold text-2xl">
+      <h2 className="font-display font-bold text-xl tracking-tight">
         {results.length} item{results.length === 1 ? "" : "s"} for “{query}”
       </h2>
       {results.length === 0 ? (
-        <EmptyState text="Nothing on any neighbourhood board matches that. Try atta, milk, or soap." />
+        <EmptyState
+          title="No matches"
+          text="Nothing on any neighbourhood board matches that. Try atta, milk, or soap."
+        />
       ) : (
         <ul className="divide-y divide-line rounded-2xl bg-counter border border-line overflow-hidden">
           {results.map((p) => (
-            <li key={p.id} className="flex items-center gap-3 p-4">
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">{p.name}</p>
-                <p className="text-sm text-ink-soft">
-                  {p.shop_name} · ₹{Number(p.price).toFixed(2)} / {p.unit}
-                </p>
-              </div>
-              <StockStamp
-                stock={p.stock_quantity}
-                available={p.is_available}
-              />
-              <AddButton product={p} shopName={p.shop_name ?? ""} />
-            </li>
+            <ProductRow key={p.id} product={p} shopName={p.shop_name ?? ""} />
           ))}
         </ul>
       )}
@@ -152,10 +177,37 @@ async function SearchResults({ query }: { query: string }) {
   );
 }
 
-function EmptyState({ text }: { text: string }) {
+export function ProductRow({
+  product,
+  shopName,
+}: {
+  product: Product;
+  shopName: string;
+}) {
   return (
-    <div className="rounded-2xl bg-counter border border-line p-8 text-center text-ink-soft">
-      {text}
+    <li className="flex items-center gap-3 px-4 py-3">
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-[15px] truncate">{product.name}</p>
+        <p className="text-[13px] text-ink-soft">
+          {shopName ? `${shopName} · ` : ""}{product.category} ·{" "}
+          <span className="font-bold text-ink tnum">₹{Number(product.price).toFixed(2)}</span>
+          {" / "}{product.unit}
+        </p>
+      </div>
+      <StockStamp
+        stock={product.stock_quantity}
+        available={product.is_available}
+      />
+      <AddButton product={product} shopName={shopName} />
+    </li>
+  );
+}
+
+export function EmptyState({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="rounded-2xl bg-counter border border-dashed border-line p-8 text-center">
+      <p className="font-display font-bold text-lg">{title}</p>
+      <p className="mt-1 text-sm text-ink-soft max-w-md mx-auto">{text}</p>
     </div>
   );
 }

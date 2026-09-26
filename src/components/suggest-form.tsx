@@ -55,7 +55,7 @@ export function SuggestForm({ shopId, shopName }: { shopId: string; shopName: st
         )}
         <button
           disabled={pending}
-          className="rounded-lg bg-marigold text-ink text-sm font-bold px-4 py-2 hover:brightness-95 disabled:opacity-50 sm:col-span-2"
+          className="rounded-lg bg-leaf text-white text-sm font-bold px-4 py-2 hover:bg-leaf-deep active:bg-leaf-deep disabled:opacity-50 sm:col-span-2"
         >
           {pending ? "Sending…" : "Send suggestion"}
         </button>
