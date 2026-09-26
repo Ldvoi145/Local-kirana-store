@@ -17,7 +17,7 @@ export interface Profile {
 
 export interface Shop {
   id: string;
-  owner_id: string | null;
+  owner_id?: string | null;
   name: string;
   address: string | null;
   timings: string | null;

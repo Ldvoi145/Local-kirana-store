@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
@@ -47,11 +48,21 @@ export default async function PresetsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="font-display font-bold text-3xl">Your presets</h1>
-      <p className="text-sm text-ink-soft">
-        Named carts such as “Monthly ration”. Load one into the cart and check
-        out in seconds.
-      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-52">
+          <h1 className="font-display font-bold text-3xl">Your presets</h1>
+          <p className="text-sm text-ink-soft">
+            Named carts such as “Monthly ration”. Tap one to load it into the cart and check
+            out in seconds. To create one, fill a cart at any shop and tap Save as preset.
+          </p>
+        </div>
+        <Link
+          href="/"
+          className="rounded-lg bg-marigold text-ink text-sm font-bold px-4 py-2 hover:brightness-95"
+        >
+          New preset — pick a shop
+        </Link>
+      </div>
       <PresetList presets={presets} />
     </div>
   );

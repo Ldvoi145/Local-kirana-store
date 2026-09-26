@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6">
             {children}
           </main>
-          <footer className="bg-leaf text-white mt-10">
+          <footer className="bg-gradient-to-r from-leaf-deep via-leaf to-jamun-deep text-white mt-10">
             <div className="max-w-6xl mx-auto px-4 py-6 text-center">
               <p className="font-display font-bold text-lg">Kirana eStore</p>
               <p className="text-white/70 text-sm">

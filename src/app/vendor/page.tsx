@@ -17,6 +17,7 @@ import { ClaimButton, CreateShopForm } from "@/components/shop-setup";
 import { AddProductForm } from "@/components/inventory-forms";
 import { ShopQR } from "@/components/shop-qr";
 import { ExportCsvButton } from "@/components/export-csv";
+import { SubmitButton } from "@/components/submit-button";
 import {
   filterTxRows,
   paymentBreakdown,
@@ -50,20 +51,21 @@ export default async function VendorPage({
     );
 
   const supabase = await createClient();
-  const { data: allShops } = await supabase
-    .from("shops")
-    .select("*")
-    .order("name");
-  const owned = (allShops ?? []).filter((s) => s.owner_id === user.id);
-  const unclaimed = (allShops ?? []).filter((s) => s.owner_id === null);
+  // Owner-scoped reads only: vendors never pull other vendors' owner_ids.
+  const [{ data: owned }, { data: unclaimed }] = await Promise.all([
+    supabase.from("shops").select("*").eq("owner_id", user.id).order("name"),
+    supabase.from("shops").select("id, name, address").is("owner_id", null).order("name"),
+  ]);
 
   const params = await searchParams;
-  const shop = owned.find((s) => s.id === params.shop) ?? owned[0] ?? null;
+  const ownedList = owned ?? [];
+  const unclaimedList = unclaimed ?? [];
+  const shop = ownedList.find((s) => s.id === params.shop) ?? ownedList[0] ?? null;
   if (!shop)
     return (
       <div className="space-y-4">
         <Gate text="Your shopkeeper account has no store yet. Claim a demo shop below or add your own." />
-        <ClaimOrCreate unclaimed={unclaimed} />
+        <ClaimOrCreate unclaimed={unclaimedList} />
       </div>
     );
   const tab: Tab =
@@ -129,9 +131,11 @@ export default async function VendorPage({
             </p>
           </div>
           <form action={toggleShopOpen.bind(null, shop.id, !shop.is_open)}>
-            <button className="rounded-lg border border-line text-sm font-semibold px-3 py-1.5 hover:bg-ledger">
-              Mark {shop.is_open ? "closed" : "open"}
-            </button>
+            <SubmitButton
+              label={`Mark ${shop.is_open ? "closed" : "open"}`}
+              pendingLabel="Saving…"
+              className="rounded-lg border border-line text-sm font-semibold px-3 py-1.5 hover:bg-ledger disabled:opacity-50"
+            />
           </form>
           <Link
             href={`/shop/${shop.id}`}
@@ -141,7 +145,7 @@ export default async function VendorPage({
           </Link>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          {owned.map((s) => (
+          {ownedList.map((s) => (
             <Link
               key={s.id}
               href={`/vendor?shop=${s.id}&tab=${tab}`}
@@ -221,7 +225,7 @@ export default async function VendorPage({
 
       <ShopQR shopId={shop.id} shopName={shop.name} />
 
-      <ClaimOrCreate unclaimed={unclaimed} />
+      <ClaimOrCreate unclaimed={unclaimedList} />
     </div>
   );
 }
@@ -331,8 +335,13 @@ function OrdersPane({ shopId, orders }: { shopId: string; orders: OrderRow[] }) 
               <td className="py-2 pr-3 font-bold">
                 #{o.id.slice(0, 8).toUpperCase()}
                 <span className="block font-normal text-ink-soft text-xs">
-                  {o.type === "Delivery" ? "Home delivery" : "Pickup"}
+                  {o.type === "Delivery" ? "Home delivery" : "Store pickup"}
                 </span>
+                {o.type === "Delivery" && o.customer_address && (
+                  <span className="block font-normal text-ink-soft text-xs max-w-44">
+                    {o.customer_address}
+                  </span>
+                )}
               </td>
               <td className="py-2 pr-3">
                 {o.customer_name}
@@ -372,13 +381,7 @@ function OrdersPane({ shopId, orders }: { shopId: string; orders: OrderRow[] }) 
                       ),
                     )}
                   </select>
-                  <button
-                    type="submit"
-                    aria-label="Save status"
-                    className="rounded-lg border border-line px-2 text-sm font-bold hover:bg-ledger"
-                  >
-                    ✓
-                  </button>
+                  <SubmitButton label="✓" pendingLabel="…" ariaLabel="Save status" />
                 </form>
               </td>
             </tr>
@@ -609,13 +612,7 @@ function RequestsPane({
                   </option>
                 ))}
               </select>
-              <button
-                type="submit"
-                aria-label="Save request status"
-                className="rounded-lg border border-line px-2 text-sm font-bold hover:bg-ledger"
-              >
-                ✓
-              </button>
+              <SubmitButton label="✓" pendingLabel="…" ariaLabel="Save request status" />
             </form>
           </li>
         ))}
@@ -682,14 +679,14 @@ function InventoryPane({
                     <input type="checkbox" name="is_available" defaultChecked={p.is_available} />
                     Available
                   </label>
-                  <button className="rounded-lg bg-leaf text-white text-sm font-semibold px-4 py-1.5 hover:bg-leaf-deep">
-                    Save
-                  </button>
+                  <SubmitButton
+                    label="Save"
+                    pendingLabel="Saving…"
+                    className="rounded-lg bg-leaf text-white text-sm font-semibold px-4 py-1.5 hover:bg-leaf-deep disabled:opacity-50"
+                  />
                 </form>
                 <form action={deleteProduct.bind(null, shopId, p.id)}>
-                  <button className="rounded-lg text-sm text-chili hover:underline px-2 py-1.5">
-                    Delete
-                  </button>
+                  <SubmitButton label="Delete" pendingLabel="Deleting…" danger />
                 </form>
               </div>
             </details>

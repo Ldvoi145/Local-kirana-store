@@ -28,9 +28,11 @@ export async function getSession() {
 export async function getShops(): Promise<Shop[]> {
   if (!isSupabaseConfigured()) return [];
   const supabase = await createClient();
+  // Never expose owner_id to the storefront; vendor pages fetch owned rows
+  // with a separate owner-scoped query.
   const { data: shops } = await supabase
     .from("shops")
-    .select("*, products(count)")
+    .select("id, name, address, timings, description, is_open, created_at, products(count)")
     .order("name");
   return (shops ?? []).map((s) => ({
     ...s,

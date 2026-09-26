@@ -27,12 +27,12 @@ export function SiteHeader({
   }
 
   return (
-    <header className="bg-leaf text-white sticky top-0 z-10 shadow">
+    <header className="bg-gradient-to-r from-leaf-deep via-leaf to-jamun text-white sticky top-0 z-10 shadow">
       <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
         <Link href="/" className="flex items-center gap-2">
           <span
             aria-hidden
-            className="grid place-items-center w-9 h-9 rounded-lg bg-marigold text-ink font-display font-extrabold text-xl"
+            className="grid place-items-center w-9 h-9 rounded-lg bg-marigold text-ink font-display font-extrabold text-xl shadow"
           >
             क
           </span>
@@ -56,14 +56,19 @@ export function SiteHeader({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search atta, milk, dal across local stores"
-            aria-label="Search products"
+            placeholder="Search shops, atta, milk, dal"
+            aria-label="Search shops and products"
             className="flex-1 rounded-l-lg px-3 py-1.5 text-ink bg-counter text-sm"
           />
           <button
             type="submit"
-            className="rounded-r-lg bg-marigold text-ink font-semibold px-4 text-sm hover:brightness-95"
+            aria-label="Search"
+            className="rounded-r-lg bg-marigold text-ink font-semibold px-4 text-sm hover:brightness-95 flex items-center gap-1.5"
           >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+              <circle cx="11" cy="11" r="7" />
+              <line x1="16.5" y1="16.5" x2="21" y2="21" />
+            </svg>
             Search
           </button>
         </form>

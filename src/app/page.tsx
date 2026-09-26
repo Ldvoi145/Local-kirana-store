@@ -15,7 +15,7 @@ export default async function Home({
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl bg-leaf text-white p-6 sm:p-8">
+      <section className="rounded-2xl text-white p-6 sm:p-8 bg-gradient-to-br from-leaf-deep via-leaf to-jamun shadow-pop">
         <h1 className="font-display font-bold text-3xl sm:text-4xl leading-tight">
           Tonight&apos;s dinner starts at the shop next door.
         </h1>
@@ -45,7 +45,7 @@ async function ShopList() {
         {shops.map((s) => (
           <li
             key={s.id}
-            className="rounded-2xl bg-counter border border-line p-5"
+            className="rounded-2xl bg-counter border border-line p-5 lift"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -83,11 +83,43 @@ async function ShopList() {
 }
 
 async function SearchResults({ query }: { query: string }) {
-  const results = await searchProducts(query);
+  const [results, shops] = await Promise.all([
+    searchProducts(query),
+    getShops(),
+  ]);
+  const q = query.toLowerCase();
+  const matchingShops = shops.filter(
+    (s) =>
+      s.name.toLowerCase().includes(q) ||
+      (s.address ?? "").toLowerCase().includes(q),
+  );
   return (
     <section className="space-y-3">
+      {matchingShops.length > 0 && (
+        <div className="rounded-2xl bg-counter border border-line p-4">
+          <h2 className="font-display font-bold text-xl">
+            Shops matching “{query}”
+          </h2>
+          <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+            {matchingShops.map((s) => (
+              <li key={s.id}>
+                <Link
+                  href={`/shop/${s.id}`}
+                  className="flex items-center justify-between gap-2 rounded-xl border border-line px-3 py-2 hover:bg-ledger"
+                >
+                  <span>
+                    <span className="block font-semibold">{s.name}</span>
+                    <span className="block text-xs text-ink-soft">{s.address}</span>
+                  </span>
+                  <span aria-hidden>→</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <h2 className="font-display font-bold text-2xl">
-        {results.length} result{results.length === 1 ? "" : "s"} for “{query}”
+        {results.length} item{results.length === 1 ? "" : "s"} for “{query}”
       </h2>
       {results.length === 0 ? (
         <EmptyState text="Nothing on any neighbourhood board matches that. Try atta, milk, or soap." />
