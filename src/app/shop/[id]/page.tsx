@@ -5,6 +5,7 @@ import { getReorderCandidates } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/product-card";
 import { PresetAddCard } from "@/components/preset-add-card";
+import { SelectedItemsBar } from "@/components/selected-items-bar";
 import { ReorderRail } from "@/components/reorder-rail";
 import { SuggestForm } from "@/components/suggest-form";
 
@@ -186,17 +187,12 @@ export default async function ShopPage({
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 p-4">
             {visible.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                shopName={shop.name}
-                loggedIn={!!user}
-                nextPath={`/shop/${shop.id}`}
-              />
+              <ProductCard key={p.id} product={p} shopName={shop.name} />
             ))}
           </ul>
         )}
       </section>
+      {!activePreset && <SelectedItemsBar shopId={shop.id} shopName={shop.name} />}
 
       {user.id !== shop.owner_id && (
         <SuggestForm shopId={shop.id} shopName={shop.name} />

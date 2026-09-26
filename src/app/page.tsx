@@ -52,7 +52,7 @@ export default async function Home({
       </section>
 
       {query ? (
-        <SearchResults query={query} shops={shops} loggedIn={!!user} />
+        <SearchResults query={query} shops={shops} />
       ) : (
         <ShopList shops={shops} />
       )}
@@ -123,7 +123,7 @@ function ShopList({ shops }: { shops: ShopSummary[] }) {
   );
 }
 
-async function SearchResults({ query, shops, loggedIn }: { query: string; shops: ShopSummary[]; loggedIn: boolean }) {
+async function SearchResults({ query, shops }: { query: string; shops: ShopSummary[] }) {
   const results = await searchProducts(query);
   const q = query.toLowerCase();
   const matchingShops = shops.filter(
@@ -171,8 +171,6 @@ async function SearchResults({ query, shops, loggedIn }: { query: string; shops:
               key={p.id}
               product={p}
               shopName={p.shop_name ?? ""}
-              loggedIn={loggedIn}
-              nextPath="/"
             />
           ))}
         </ul>
