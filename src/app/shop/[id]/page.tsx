@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/product-card";
 import { PresetAddCard } from "@/components/preset-add-card";
 import { SelectedItemsBar } from "@/components/selected-items-bar";
+import { VendorQuickAdd } from "@/components/vendor-quick-add";
 import { ReorderRail } from "@/components/reorder-rail";
 import { SuggestForm } from "@/components/suggest-form";
 
@@ -146,6 +147,10 @@ export default async function ShopPage({
 
       {user && reorder.length > 0 && (
         <ReorderRail items={reorder.slice(0, 6)} shopName={shop.name} />
+      )}
+
+      {user.id === shop.owner_id && (
+        <VendorQuickAdd shopId={shop.id} shopName={shop.name} />
       )}
 
       <section className="rounded-2xl bg-counter border border-line overflow-hidden">
