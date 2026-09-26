@@ -76,9 +76,9 @@ async function ShopList() {
               </span>
               <Link
                 href={`/shop/${s.id}`}
-                className="rounded-lg bg-marigold text-ink text-sm font-semibold px-4 py-2 hover:brightness-95"
+                className="rounded-lg bg-leaf text-white text-sm font-semibold px-4 py-2 hover:bg-leaf-deep"
               >
-                Shop inventory
+                Shop inventory →
               </Link>
             </div>
           </li>
