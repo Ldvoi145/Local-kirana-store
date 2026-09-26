@@ -29,8 +29,7 @@ export function SiteHeader({
 
   // Auth pages get a quiet brand-only header: no search, cart, or
   // account controls until the user is inside the store.
-  if (pathname === "/login" || pathname === "/signup") {
-    return (
+  if (pathname === "/login" || pathname === "/signup") {    return (
       <header className="bg-leaf-deep text-white sticky top-0 z-10 shadow-md">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-center">
           <Link href="/" className="flex items-center gap-2" aria-label="Kirana eStore home">
@@ -100,7 +99,12 @@ export function SiteHeader({
         <nav className="flex items-center gap-2 text-sm ml-auto" aria-label="Account">
           <Link
             href="/cart"
-            className="rounded-lg border border-white/35 px-3 py-1.5 hover:bg-white/10 focus-visible:outline-white"
+            aria-current={pathname === "/cart" ? "page" : undefined}
+            className={`rounded-lg border px-3 py-1.5 hover:bg-white/10 focus-visible:outline-white ${
+              pathname === "/cart"
+                ? "bg-white text-leaf-deep font-bold border-white"
+                : "border-white/35"
+            }`}
           >
             Cart
             <span
@@ -113,7 +117,12 @@ export function SiteHeader({
           {role === "vendor" && (
             <Link
               href="/vendor"
-              className="rounded-lg bg-white/10 border border-white/25 px-3 py-1.5 font-semibold hover:bg-white/15"
+              aria-current={pathname.startsWith("/vendor") ? "page" : undefined}
+              className={`rounded-lg border px-3 py-1.5 font-semibold hover:bg-white/15 ${
+                pathname.startsWith("/vendor")
+                  ? "bg-white text-leaf-deep border-white"
+                  : "bg-white/10 border-white/25"
+              }`}
             >
               Vendor
             </Link>
@@ -121,7 +130,12 @@ export function SiteHeader({
           {role === "customer" && (
             <Link
               href="/presets"
-              className="rounded-lg border border-white/35 px-3 py-1.5 hover:bg-white/10"
+              aria-current={pathname.startsWith("/presets") ? "page" : undefined}
+              className={`rounded-lg border px-3 py-1.5 hover:bg-white/10 ${
+                pathname.startsWith("/presets")
+                  ? "bg-white text-leaf-deep font-bold border-white"
+                  : "border-white/35"
+              }`}
             >
               Presets
             </Link>
