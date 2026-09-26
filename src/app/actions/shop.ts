@@ -33,6 +33,30 @@ async function requireVendorShop(shopId: string) {
   return { supabase, user };
 }
 
+export async function createShopState(
+  _prev: string | null,
+  formData: FormData,
+): Promise<string> {
+  try {
+    await createShop(formData);
+    return "created";
+  } catch (e) {
+    return e instanceof Error ? e.message : "Could not add shop.";
+  }
+}
+
+export async function claimShopState(
+  shopId: string,
+  _prev: string | null,
+): Promise<string> {
+  void _prev;
+  try {
+    await claimShop(shopId);
+    return "claimed";
+  } catch (e) {
+    return e instanceof Error ? e.message : "Could not claim shop.";
+  }
+}
 export async function createShop(formData: FormData) {
   const { supabase, user } = await requireVendor();
   const name = String(formData.get("name") ?? "").trim().slice(0, 80);

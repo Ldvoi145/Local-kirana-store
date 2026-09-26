@@ -8,13 +8,12 @@ import {
 } from "@/lib/analytics";
 import {
   addProduct,
-  claimShop,
-  createShop,
   deleteProduct,
   toggleShopOpen,
   updateOrderStatus,
   updateProduct,
 } from "@/app/actions/shop";
+import { ClaimButton, CreateShopForm } from "@/components/shop-setup";
 
 export const dynamic = "force-dynamic";
 
@@ -186,28 +185,12 @@ function ClaimOrCreate({
                   Unclaimed demo shop
                 </span>
               </span>
-              <form action={claimShop.bind(null, s.id)}>
-                <button className="rounded-lg bg-marigold text-ink text-sm font-bold px-3 py-1.5 hover:brightness-95">
-                  Claim
-                </button>
-              </form>
+              <ClaimButton shopId={s.id} shopName={s.name} />
             </li>
           ))}
         </ul>
       )}
-      <details className="mt-3 rounded-xl border border-line">
-        <summary className="cursor-pointer px-4 py-2.5 text-sm font-semibold hover:bg-ledger rounded-xl">
-          Add your own shop
-        </summary>
-        <form action={createShop} className="grid sm:grid-cols-3 gap-2 p-4 border-t border-line">
-          <input name="name" required minLength={2} placeholder="Shop name" aria-label="Shop name" className="rounded-lg border border-line px-3 py-2 text-sm" />
-          <input name="address" placeholder="Address" aria-label="Address" className="rounded-lg border border-line px-3 py-2 text-sm" />
-          <input name="timings" placeholder="Timings" aria-label="Timings" className="rounded-lg border border-line px-3 py-2 text-sm" />
-          <button className="rounded-lg bg-leaf text-white text-sm font-semibold px-4 py-2 hover:bg-leaf-deep sm:col-span-3">
-            Add shop
-          </button>
-        </form>
-      </details>
+      <CreateShopForm />
     </section>
   );
 }
