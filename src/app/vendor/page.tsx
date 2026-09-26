@@ -7,13 +7,13 @@ import {
   getRestockSuggestions,
 } from "@/lib/analytics";
 import {
-  addProduct,
   deleteProduct,
   toggleShopOpen,
   updateOrderStatus,
   updateProduct,
 } from "@/app/actions/shop";
 import { ClaimButton, CreateShopForm } from "@/components/shop-setup";
+import { AddProductForm } from "@/components/inventory-forms";
 
 export const dynamic = "force-dynamic";
 
@@ -343,24 +343,7 @@ function InventoryPane({
 }) {
   return (
     <div className="rounded-2xl bg-counter border border-line p-4 space-y-4">
-      <details className="rounded-xl border border-line">
-        <summary className="cursor-pointer px-4 py-3 font-semibold text-sm hover:bg-ledger rounded-xl">
-          Add a new product
-        </summary>
-        <form
-          action={addProduct.bind(null, shopId)}
-          className="grid sm:grid-cols-2 gap-2 p-4 border-t border-line"
-        >
-          <input name="name" required placeholder="Product name" aria-label="Product name" className="rounded-lg border border-line px-3 py-2 text-sm" />
-          <input name="category" required placeholder="Category" aria-label="Category" className="rounded-lg border border-line px-3 py-2 text-sm" />
-          <input name="price" type="number" step="0.5" min="1" required placeholder="Price ₹" aria-label="Price" className="rounded-lg border border-line px-3 py-2 text-sm" />
-          <input name="unit" required placeholder="Unit, e.g. 1 kg" aria-label="Unit" className="rounded-lg border border-line px-3 py-2 text-sm" />
-          <input name="stock_quantity" type="number" min="0" defaultValue={15} aria-label="Stock quantity" className="rounded-lg border border-line px-3 py-2 text-sm" />
-          <button className="rounded-lg bg-leaf text-white text-sm font-semibold px-4 py-2 hover:bg-leaf-deep">
-            Add product
-          </button>
-        </form>
-      </details>
+      <AddProductForm shopId={shopId} />
 
       <ul className="divide-y divide-line">
         {products.map((p) => (

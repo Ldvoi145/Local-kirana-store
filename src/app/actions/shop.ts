@@ -171,6 +171,20 @@ export async function addProduct(shopId: string, formData: FormData) {
   });
   if (error) throw new Error(error.message);
   revalidatePath("/vendor");
+  revalidatePath("/", "layout");
+}
+
+export async function addProductState(
+  shopId: string,
+  _prev: string | null,
+  formData: FormData,
+): Promise<string> {
+  try {
+    await addProduct(shopId, formData);
+    return "added";
+  } catch (e) {
+    return e instanceof Error ? e.message : "Could not add product.";
+  }
 }
 
 export async function updateProduct(
