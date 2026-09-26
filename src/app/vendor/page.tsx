@@ -139,7 +139,7 @@ export default async function VendorPage({
           </form>
           <Link
             href={`/shop/${shop.id}`}
-            className="rounded-lg bg-marigold text-ink text-sm font-semibold px-3 py-1.5 hover:brightness-95"
+            className="rounded-lg bg-leaf text-white text-sm font-semibold px-3 py-1.5 hover:bg-leaf-deep"
           >
             View shop inventory
           </Link>

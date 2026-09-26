@@ -63,7 +63,7 @@ export function SiteHeader({
           <button
             type="submit"
             aria-label="Search"
-            className="rounded-r-lg bg-marigold text-ink font-semibold px-4 text-sm hover:brightness-95 flex items-center gap-1.5"
+            className="rounded-r-lg bg-counter text-ink font-semibold px-4 text-sm hover:bg-white flex items-center gap-1.5"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
               <circle cx="11" cy="11" r="7" />
