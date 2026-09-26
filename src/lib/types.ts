@@ -51,9 +51,26 @@ export interface Order {
   customer_phone: string;
   customer_address: string;
   created_at: string;
+  updated_at: string;
   shop_name?: string;
   items?: OrderItem[];
 }
+
+export interface OrderEvent {
+  id: string;
+  order_id: string;
+  from_status: OrderStatus | null;
+  to_status: OrderStatus;
+  changed_by: string | null;
+  created_at: string;
+}
+
+export const PAYMENT_METHODS = [
+  "Cash on Delivery",
+  "UPI",
+  "Card",
+] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export interface OrderItem {
   id: string;

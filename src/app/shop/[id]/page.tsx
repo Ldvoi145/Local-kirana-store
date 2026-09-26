@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getShop, getSession } from "@/lib/dal";
 import { getReorderCandidates } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/server";
@@ -16,6 +16,10 @@ export default async function ShopPage({
   searchParams: Promise<{ q?: string; category?: string }>;
 }) {
   const { id } = await params;
+  const { user } = await getSession();
+  // QR entry: scan -> shop -> login/signup -> back here. Logged-in
+  // customers skip straight to the rate board.
+  if (!user) redirect(`/login?next=${encodeURIComponent(`/shop/${id}`)}`);
   const data = await getShop(id);
   if (!data) notFound();
   const { shop, products, categories } = data;
@@ -32,7 +36,6 @@ export default async function ShopPage({
     return true;
   });
 
-  const { user } = await getSession();
   let reorder: Awaited<ReturnType<typeof getReorderCandidates>> = [];
   if (user) {
     const supabase = await createClient();

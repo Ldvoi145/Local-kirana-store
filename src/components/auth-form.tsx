@@ -91,11 +91,11 @@ function AuthForm({
       <p className="mt-4 text-sm text-ink-soft">
         {mode === "login" ? (
           <>
-            New here? <Link href="/signup" className="text-leaf font-semibold">Create an account</Link>
+            New here? <Link href={`/signup?next=${encodeURIComponent(next)}`} className="text-leaf font-semibold">Create an account</Link>
           </>
         ) : (
           <>
-            Already have an account? <Link href="/login" className="text-leaf font-semibold">Log in</Link>
+            Already have an account? <Link href={`/login?next=${encodeURIComponent(next)}`} className="text-leaf font-semibold">Log in</Link>
           </>
         )}
       </p>

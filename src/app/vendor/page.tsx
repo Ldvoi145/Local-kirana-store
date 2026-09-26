@@ -14,15 +14,32 @@ import {
 } from "@/app/actions/shop";
 import { ClaimButton, CreateShopForm } from "@/components/shop-setup";
 import { AddProductForm } from "@/components/inventory-forms";
+import { ShopQR } from "@/components/shop-qr";
+import { ExportCsvButton } from "@/components/export-csv";
+import {
+  filterTxRows,
+  paymentBreakdown,
+  toTxRow,
+  vendorTxCsv,
+} from "@/lib/transactions";
 
 export const dynamic = "force-dynamic";
 
-type Tab = "orders" | "inventory" | "insights";
+type Tab = "orders" | "inventory" | "insights" | "transactions";
 
 export default async function VendorPage({
   searchParams,
 }: {
-  searchParams: Promise<{ shop?: string; tab?: string }>;
+  searchParams: Promise<{
+    shop?: string;
+    tab?: string;
+    status?: string;
+    type?: string;
+    payment?: string;
+    from?: string;
+    to?: string;
+    q?: string;
+  }>;
 }) {
   const { user, profile } = await getSession();
   if (!user) redirect("/login?next=/vendor");
@@ -49,7 +66,9 @@ export default async function VendorPage({
       </div>
     );
   const tab: Tab =
-    params.tab === "inventory" || params.tab === "insights"
+    params.tab === "inventory" ||
+    params.tab === "insights" ||
+    params.tab === "transactions"
       ? params.tab
       : "orders";
 
@@ -65,6 +84,21 @@ export default async function VendorPage({
       .eq("shop_id", shop.id)
       .order("name"),
   ]);
+
+  const txRows = (orders ?? []).map((o) =>
+    toTxRow(o as unknown as Parameters<typeof toTxRow>[0]),
+  );
+  const txFilters = {
+    status: params.status ?? "",
+    type: params.type ?? "",
+    payment: params.payment ?? "",
+    from: params.from ?? "",
+    to: params.to ?? "",
+    q: params.q ?? "",
+  };
+  const filteredTx = filterTxRows(txRows, txFilters);
+  const paySplit = paymentBreakdown(filteredTx);
+  const txCsv = vendorTxCsv(filteredTx);
 
   const revenue = (orders ?? [])
     .filter((o) => o.status !== "Cancelled")
@@ -124,7 +158,7 @@ export default async function VendorPage({
       </section>
 
       <nav className="flex gap-1 rounded-2xl bg-counter border border-line p-1.5" aria-label="Vendor sections">
-        {(["orders", "inventory", "insights"] as Tab[]).map((t) => (
+        {(["orders", "transactions", "inventory", "insights"] as Tab[]).map((t) => (
           <Link
             key={t}
             href={`/vendor?shop=${shop.id}&tab=${t}`}
@@ -135,9 +169,11 @@ export default async function VendorPage({
           >
             {t === "orders"
               ? `Orders (${orders?.length ?? 0})`
-              : t === "inventory"
-                ? `Inventory (${products?.length ?? 0})`
-                : "Insights"}
+              : t === "transactions"
+                ? `Transactions (${filteredTx.length})`
+                : t === "inventory"
+                  ? `Inventory (${products?.length ?? 0})`
+                  : "Insights"}
           </Link>
         ))}
       </nav>
@@ -155,6 +191,18 @@ export default async function VendorPage({
         />
       )}
       {tab === "insights" && <InsightsPane shopId={shop.id} />}
+
+      {tab === "transactions" && (
+        <TransactionsPane
+          shopId={shop.id}
+          rows={filteredTx}
+          filters={txFilters}
+          paySplit={paySplit}
+          csv={txCsv}
+        />
+      )}
+
+      <ShopQR shopId={shop.id} shopName={shop.name} />
 
       <ClaimOrCreate unclaimed={unclaimed} />
     </div>
@@ -320,6 +368,167 @@ function OrdersPane({ shopId, orders }: { shopId: string; orders: OrderRow[] }) 
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+interface TxFilterState {
+  status: string;
+  type: string;
+  payment: string;
+  from: string;
+  to: string;
+  q: string;
+}
+
+interface TxDisplayRow {
+  id: string;
+  created_at: string;
+  customer_name: string;
+  customer_phone: string;
+  shop_name: string;
+  type: string;
+  payment_method: string;
+  status: string;
+  item_count: number;
+  total_amount: number;
+}
+
+function TransactionsPane({
+  shopId,
+  rows,
+  filters,
+  paySplit,
+  csv,
+}: {
+  shopId: string;
+  rows: TxDisplayRow[];
+  filters: TxFilterState;
+  paySplit: { payment: string; orders: number; revenue: number }[];
+  csv: string;
+}) {
+  const revenue = rows
+    .filter((r) => r.status !== "Cancelled")
+    .reduce((n, r) => n + r.total_amount, 0);
+  const base = `/vendor?shop=${shopId}&tab=transactions`;
+  return (
+    <div className="space-y-4">
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Stat label="Transactions" value={String(rows.length)} />
+        <Stat label="Collected" value={`₹${revenue.toFixed(2)}`} />
+        <Stat
+          label="UPI share"
+          value={
+            paySplit.length === 0
+              ? "—"
+              : `${Math.round(((paySplit.find((p) => p.payment === "UPI")?.revenue ?? 0) / Math.max(revenue, 1)) * 100)}%`
+          }
+        />
+        <div className="rounded-2xl bg-counter border border-line p-4 flex items-end">
+          <ExportCsvButton
+            csv={csv}
+            filename={`transactions-${shopId.slice(0, 8)}.csv`}
+            label={`Export CSV (${rows.length})`}
+          />
+        </div>
+      </section>
+
+      <form
+        method="get"
+        className="rounded-2xl bg-counter border border-line p-4 grid sm:grid-cols-3 lg:grid-cols-6 gap-2"
+      >
+        <input type="hidden" name="shop" value={shopId} />
+        <input type="hidden" name="tab" value="transactions" />
+        <select name="status" defaultValue={filters.status} aria-label="Filter by status" className="rounded-lg border border-line px-2 py-1.5 text-sm bg-ledger">
+          <option value="">All statuses</option>
+          {["Pending", "Preparing", "Ready", "Completed", "Cancelled"].map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <select name="type" defaultValue={filters.type} aria-label="Filter by type" className="rounded-lg border border-line px-2 py-1.5 text-sm bg-ledger">
+          <option value="">Pickup + Delivery</option>
+          <option value="Pickup">Pickup</option>
+          <option value="Delivery">Delivery</option>
+        </select>
+        <select name="payment" defaultValue={filters.payment} aria-label="Filter by payment" className="rounded-lg border border-line px-2 py-1.5 text-sm bg-ledger">
+          <option value="">All payments</option>
+          <option value="Cash on Delivery">Cash on Delivery</option>
+          <option value="UPI">UPI</option>
+          <option value="Card">Card</option>
+        </select>
+        <input name="from" type="date" defaultValue={filters.from} aria-label="From date" className="rounded-lg border border-line px-2 py-1.5 text-sm" />
+        <input name="to" type="date" defaultValue={filters.to} aria-label="To date" className="rounded-lg border border-line px-2 py-1.5 text-sm" />
+        <input name="q" defaultValue={filters.q} placeholder="Search id, customer, phone" aria-label="Search transactions" className="rounded-lg border border-line px-3 py-1.5 text-sm sm:col-span-2 lg:col-span-4" />
+        <div className="flex gap-2 sm:col-span-1 lg:col-span-2">
+          <button className="flex-1 rounded-lg bg-leaf text-white text-sm font-semibold px-3 py-1.5 hover:bg-leaf-deep">
+            Filter
+          </button>
+          <Link href={base} className="rounded-lg border border-line text-sm font-semibold px-3 py-1.5 hover:bg-ledger">
+            Clear
+          </Link>
+        </div>
+      </form>
+
+      {paySplit.length > 0 && (
+        <section className="rounded-2xl bg-counter border border-line p-4">
+          <h2 className="font-display font-bold text-lg">Payment breakdown</h2>
+          <ul className="mt-2 grid sm:grid-cols-3 gap-2">
+            {paySplit.map((p) => (
+              <li key={p.payment} className="rounded-xl border border-line px-3 py-2 text-sm">
+                <p className="font-semibold">{p.payment}</p>
+                <p className="text-ink-soft">
+                  {p.orders} orders · ₹{p.revenue.toFixed(2)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <div className="rounded-2xl bg-counter border border-line p-4 overflow-x-auto">
+        {rows.length === 0 ? (
+          <p className="p-4 text-center text-sm text-ink-soft">
+            No transactions match these filters.
+          </p>
+        ) : (
+          <table className="w-full text-sm min-w-170">
+            <thead>
+              <tr className="text-left text-xs text-ink-soft border-b border-line">
+                <th className="py-2 pr-3">Order</th>
+                <th className="py-2 pr-3">Customer</th>
+                <th className="py-2 pr-3">Type</th>
+                <th className="py-2 pr-3">Payment</th>
+                <th className="py-2 pr-3">Status</th>
+                <th className="py-2 pr-3 text-right">Items</th>
+                <th className="py-2 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} className="border-b border-line last:border-0">
+                  <td className="py-2 pr-3 font-bold">
+                    #{r.id.slice(0, 8).toUpperCase()}
+                    <span className="block font-normal text-ink-soft text-xs">
+                      {new Date(r.created_at).toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-3">
+                    {r.customer_name}
+                    <span className="block text-ink-soft text-xs">{r.customer_phone}</span>
+                  </td>
+                  <td className="py-2 pr-3">{r.type}</td>
+                  <td className="py-2 pr-3">{r.payment_method}</td>
+                  <td className="py-2 pr-3">{r.status}</td>
+                  <td className="py-2 pr-3 text-right">{r.item_count}</td>
+                  <td className="py-2 text-right font-bold text-leaf">
+                    ₹{r.total_amount.toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

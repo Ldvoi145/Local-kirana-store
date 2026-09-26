@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart";
 import { checkout, savePreset } from "@/app/actions/shop";
+import { PAYMENT_METHODS } from "@/lib/types";
 
 export default function CartPage() {
   const { lines, total, shopName, setQty, remove, clear } = useCart();
   const [orderType, setOrderType] = useState<"Pickup" | "Delivery">("Pickup");
+  const [payment, setPayment] = useState<string>(PAYMENT_METHODS[0]);
   const [address, setAddress] = useState("");
   const [presetName, setPresetName] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -19,7 +21,7 @@ export default function CartPage() {
     setBusy(true);
     setMessage(null);
     try {
-      const orderId = await checkout(lines, orderType, address, "Cash on Delivery");
+      const orderId = await checkout(lines, orderType, address, payment);
       clear();
       router.push(`/order/${orderId}`);
     } catch (e) {
@@ -136,6 +138,21 @@ export default function CartPage() {
             />
           )}
           <p className="mt-2 text-sm text-ink-soft">Pay cash or UPI at pickup or the doorstep.</p>
+          <label className="mt-2 block">
+            <span className="text-sm font-semibold">Payment mode</span>
+            <select
+              value={payment}
+              onChange={(e) => setPayment(e.target.value)}
+              aria-label="Payment mode"
+              className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm bg-counter"
+            >
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <button
           onClick={placeOrder}

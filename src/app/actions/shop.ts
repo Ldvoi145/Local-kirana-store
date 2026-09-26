@@ -102,7 +102,9 @@ export async function checkout(
     })),
     p_type: orderType,
     p_address: address.trim(),
-    p_payment: payment,
+    p_payment: ["Cash on Delivery", "UPI", "Card"].includes(payment)
+      ? payment
+      : "Cash on Delivery",
   });
   if (error) throw new Error(error.message);
   revalidatePath("/", "layout");
@@ -114,17 +116,34 @@ export async function updateOrderStatus(
   shopId: string,
   formData: FormData,
 ) {
-  const { supabase } = await requireVendorShop(shopId);
+  const { supabase, user } = await requireVendorShop(shopId);
   const status = String(formData.get("status") ?? "");
   if (!["Pending", "Preparing", "Ready", "Completed", "Cancelled"].includes(status))
     throw new Error("Invalid status.");
+  const { data: current } = await supabase
+    .from("orders")
+    .select("status")
+    .eq("id", orderId)
+    .eq("shop_id", shopId)
+    .single();
+  if (!current) throw new Error("Order not found.");
   const { error } = await supabase
     .from("orders")
     .update({ status })
     .eq("id", orderId)
     .eq("shop_id", shopId);
   if (error) throw new Error(error.message);
+  if (current.status !== status) {
+    await supabase.from("order_events").insert({
+      order_id: orderId,
+      from_status: current.status,
+      to_status: status,
+      changed_by: user.id,
+    });
+  }
   revalidatePath("/vendor");
+  revalidatePath("/orders");
+  revalidatePath(`/order/${orderId}`);
 }
 
 export async function claimShop(shopId: string) {

@@ -63,7 +63,8 @@ create table if not exists orders (
   customer_name text not null default '',
   customer_phone text not null default '',
   customer_address text not null default '',
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 create index if not exists orders_shop_idx on orders (shop_id, created_at desc);
 create index if not exists orders_customer_idx on orders (customer_id, created_at desc);
@@ -94,6 +95,18 @@ create table if not exists preset_items (
   quantity integer not null default 1 check (quantity > 0),
   primary key (preset_id, product_id)
 );
+
+-- Append-only lifecycle ledger: creation + every status change.
+create table if not exists order_events (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references orders (id) on delete cascade,
+  from_status order_status,
+  to_status order_status not null,
+  changed_by uuid references profiles (id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists order_events_order_idx
+  on order_events (order_id, created_at);
 
 -- ---------- Auto-create profile on signup ----------
 create or replace function public.handle_new_user()
@@ -205,9 +218,28 @@ begin
       where id = v_pid;
   end loop;
 
+  insert into order_events (order_id, from_status, to_status, changed_by)
+  values (v_order_id, null, 'Pending', v_uid);
+
   return v_order_id;
 end;
 $$;
+
+-- Keep orders.updated_at fresh.
+create or replace function public.set_orders_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+drop trigger if exists orders_set_updated_at on orders;
+create trigger orders_set_updated_at
+  before update on orders
+  for each row execute function public.set_orders_updated_at();
 
 -- ---------- Row Level Security ----------
 alter table profiles enable row level security;
@@ -215,6 +247,7 @@ alter table shops enable row level security;
 alter table products enable row level security;
 alter table orders enable row level security;
 alter table order_items enable row level security;
+alter table order_events enable row level security;
 alter table presets enable row level security;
 alter table preset_items enable row level security;
 
@@ -292,6 +325,30 @@ create policy order_items_insert on order_items
   for insert with check (exists (
     select 1 from orders o
     where o.id = order_items.order_id and o.customer_id = auth.uid()));
+
+-- order_events: append-only timeline, visible wherever the parent order is visible
+drop policy if exists order_events_customer_read on order_events;
+create policy order_events_customer_read on order_events
+  for select using (exists (
+    select 1 from orders o
+    where o.id = order_events.order_id
+      and o.customer_id = auth.uid()));
+drop policy if exists order_events_vendor_read on order_events;
+create policy order_events_vendor_read on order_events
+  for select using (exists (
+    select 1 from orders o
+    join shops s on s.id = o.shop_id
+    where o.id = order_events.order_id
+      and s.owner_id = auth.uid()));
+drop policy if exists order_events_writer_insert on order_events;
+create policy order_events_writer_insert on order_events
+  for insert with check (
+    auth.uid() = changed_by
+    and exists (
+      select 1 from orders o
+      left join shops s on s.id = o.shop_id
+      where o.id = order_events.order_id
+        and (o.customer_id = auth.uid() or s.owner_id = auth.uid())));
 
 -- presets: owner-only
 drop policy if exists presets_owner on presets;

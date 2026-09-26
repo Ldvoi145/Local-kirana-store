@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Order, OrderItem, Product, Profile, Shop } from "@/lib/types";
+import type { Order, OrderEvent, OrderItem, Product, Profile, Shop } from "@/lib/types";
 
 /** True once .env.local carries Supabase credentials. */
 export function isSupabaseConfigured() {
@@ -83,15 +83,31 @@ export async function getOrderWithItems(orderId: string) {
     .eq("id", orderId)
     .single();
   if (!order) return null;
-  const { data: items } = await supabase
-    .from("order_items")
-    .select("*")
-    .eq("order_id", orderId);
+  const [{ data: items }, { data: events }] = await Promise.all([
+    supabase.from("order_items").select("*").eq("order_id", orderId),
+    supabase
+      .from("order_events")
+      .select("*")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: true }),
+  ]);
   return {
     order: {
       ...(order as unknown as Order),
       shop_name: (order as unknown as { shops: { name: string } }).shops?.name,
     },
     items: (items ?? []) as OrderItem[],
+    events: (events ?? []) as OrderEvent[],
   };
+}
+
+export async function getOrderEvents(orderId: string) {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("order_events")
+    .select("*")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: true });
+  return (data ?? []) as OrderEvent[];
 }

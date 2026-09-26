@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 
-const PROTECTED_PREFIXES = ["/vendor", "/orders", "/presets"];
+const PROTECTED_PREFIXES = ["/vendor", "/orders", "/presets", "/shop", "/order", "/cart"];
 
 export async function proxy(request: NextRequest) {
   let response: NextResponse;
@@ -13,7 +13,9 @@ export async function proxy(request: NextRequest) {
     response = NextResponse.next({ request });
   }
   const path = request.nextUrl.pathname;
-  const needsAuth = PROTECTED_PREFIXES.some((p) => path.startsWith(p));
+  const needsAuth = PROTECTED_PREFIXES.some(
+    (p) => path === p || path.startsWith(`${p}/`),
+  );
   if (!needsAuth) return response;
 
   // Optimistic check only; secure role checks happen against the database
@@ -23,7 +25,7 @@ export async function proxy(request: NextRequest) {
     .some((c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token"));
   if (!hasSession) {
     const login = new URL("/login", request.url);
-    login.searchParams.set("next", path);
+    login.searchParams.set("next", path + request.nextUrl.search);
     return NextResponse.redirect(login);
   }
   return response;
