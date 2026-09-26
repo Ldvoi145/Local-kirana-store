@@ -78,7 +78,7 @@ async function ShopList() {
                 href={`/shop/${s.id}`}
                 className="rounded-lg bg-marigold text-ink text-sm font-semibold px-4 py-2 hover:brightness-95"
               >
-                Open rate board
+                Shop inventory
               </Link>
             </div>
           </li>

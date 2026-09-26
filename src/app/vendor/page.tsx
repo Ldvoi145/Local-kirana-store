@@ -139,9 +139,9 @@ export default async function VendorPage({
           </form>
           <Link
             href={`/shop/${shop.id}`}
-            className="rounded-lg bg-leaf text-white text-sm font-semibold px-3 py-1.5 hover:bg-leaf-deep"
+            className="rounded-lg bg-marigold text-ink text-sm font-semibold px-3 py-1.5 hover:brightness-95"
           >
-            View customer store
+            View shop inventory
           </Link>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
