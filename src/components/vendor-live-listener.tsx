@@ -39,7 +39,7 @@ export function VendorLiveListener({ shopId }: { shopId: string }) {
               ? prev
               : [
                   {
-                    kind: "order",
+                    kind: "order" as const,
                     id,
                     label: `#${id.slice(0, 8).toUpperCase()}`,
                     at: Date.now(),
@@ -64,7 +64,7 @@ export function VendorLiveListener({ shopId }: { shopId: string }) {
               ? prev
               : [
                   {
-                    kind: "request",
+                    kind: "request" as const,
                     id: row.id,
                     label: row.item_name,
                     at: Date.now(),
