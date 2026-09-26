@@ -40,12 +40,8 @@ export function ProductCard({
   const atMax = existing ? existing.quantity >= product.stock_quantity : false;
   const presetQty = existing?.quantity ?? 1;
 
-  function buy() {
+  function addOne() {
     if (unavailable) return;
-    if (existing) {
-      router.push("/cart");
-      return;
-    }
     const result = add(product, shopName);
     if (result === "switched") setNote(`Cart switched to ${shopName}.`);
     else setNote(null);
@@ -121,7 +117,7 @@ export function ProductCard({
         <StockStamp stock={product.stock_quantity} available={product.is_available} />
       </div>
 
-      {existing && (
+      {existing ? (
         <span
           className="inline-flex items-center gap-1"
           role="group"
@@ -147,21 +143,22 @@ export function ProductCard({
             +
           </button>
         </span>
+      ) : (
+        <button
+          onClick={addOne}
+          disabled={unavailable}
+          className="w-fit rounded-lg bg-leaf text-white text-sm font-bold px-4 py-1.5 hover:bg-leaf-deep active:bg-leaf-deep disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {unavailable ? "Unavailable" : "Add"}
+        </button>
       )}
 
-      <div className="mt-auto flex flex-col min-[420px]:flex-row gap-2 pt-1">
-        <button
-          onClick={buy}
-          disabled={unavailable && !existing}
-          className="flex-1 rounded-lg bg-leaf text-white text-sm font-bold px-4 py-2 hover:bg-leaf-deep active:bg-leaf-deep disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {unavailable && !existing ? "Unavailable" : "Buy"}
-        </button>
+      <div className="mt-auto pt-1">
         <button
           onClick={togglePicker}
           disabled={unavailable && !existing}
           aria-expanded={pickerOpen}
-          className="flex-1 rounded-lg bg-counter border border-leaf text-leaf text-sm font-semibold px-4 py-2 hover:bg-leaf/5 active:bg-leaf/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full rounded-lg bg-counter border border-leaf text-leaf text-sm font-semibold px-4 py-2 hover:bg-leaf/5 active:bg-leaf/10 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           + Add to Preset
         </button>
