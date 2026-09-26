@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   claimShopState,
   createShopState,
+  deleteShop,
 } from "@/app/actions/shop";
 
 export function ClaimButton({
@@ -81,5 +82,70 @@ export function CreateShopForm() {
         </button>
       </form>
     </details>
+  );
+}
+
+export function DeleteShopButton({
+  shopId,
+  shopName,
+}: {
+  shopId: string;
+  shopName: string;
+}) {
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function destroy() {
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteShop(shopId);
+      router.push("/vendor");
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not remove shop.");
+      setConfirming(false);
+      setBusy(false);
+    }
+  }
+
+  if (!confirming) {
+    return (
+      <button
+        onClick={() => setConfirming(true)}
+        className="rounded-lg text-sm text-chili hover:underline px-2 py-1.5"
+      >
+        Remove shop
+      </button>
+    );
+  }
+
+  return (
+    <span className="inline-flex flex-wrap items-center gap-2 rounded-xl border border-chili/30 bg-chili/5 px-3 py-1.5 text-sm">
+      <span className="font-semibold">Remove “{shopName}” and its items?</span>
+      <button
+        onClick={destroy}
+        disabled={busy}
+        className="rounded-lg bg-chili text-white text-xs font-bold px-3 py-1.5 hover:brightness-95 disabled:opacity-50"
+      >
+        {busy ? "Removing…" : "Yes, remove"}
+      </button>
+      <button
+        onClick={() => {
+          setConfirming(false);
+          setError(null);
+        }}
+        className="rounded-lg border border-line text-xs font-semibold px-3 py-1.5 hover:bg-ledger"
+      >
+        Keep
+      </button>
+      {error && (
+        <span role="alert" className="text-xs text-chili w-full">
+          {error}
+        </span>
+      )}
+    </span>
   );
 }

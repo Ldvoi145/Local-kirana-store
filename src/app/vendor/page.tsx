@@ -13,7 +13,7 @@ import {
   updateProduct,
   updateSuggestionStatus,
 } from "@/app/actions/shop";
-import { ClaimButton, CreateShopForm } from "@/components/shop-setup";
+import { ClaimButton, CreateShopForm, DeleteShopButton } from "@/components/shop-setup";
 import { AddProductForm } from "@/components/inventory-forms";
 import { ShopQR } from "@/components/shop-qr";
 import { ExportCsvButton } from "@/components/export-csv";
@@ -143,6 +143,7 @@ export default async function VendorPage({
           >
             View shop inventory
           </Link>
+          <DeleteShopButton shopId={shop.id} shopName={shop.name} />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {ownedList.map((s) => (

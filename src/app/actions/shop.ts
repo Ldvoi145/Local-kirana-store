@@ -174,6 +174,23 @@ export async function toggleShopOpen(shopId: string, isOpen: boolean) {
   revalidatePath("/vendor");
 }
 
+/** Remove a vendor-owned store. Blocked while order history exists. */
+export async function deleteShop(shopId: string) {
+  const { supabase } = await requireVendorShop(shopId);
+  const { count } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("shop_id", shopId);
+  if ((count ?? 0) > 0)
+    throw new Error(
+      "This store has order history, so it cannot be removed. Mark it closed instead.",
+    );
+  const { error } = await supabase.from("shops").delete().eq("id", shopId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/vendor");
+  revalidatePath("/", "layout");
+}
+
 export async function addProduct(shopId: string, formData: FormData) {
   const { supabase } = await requireVendorShop(shopId);
   const name = String(formData.get("name") ?? "").trim();
