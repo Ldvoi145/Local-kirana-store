@@ -1,28 +1,30 @@
 @import "tailwindcss";
 
 @theme {
-  --color-leaf: #0b4a2f;
-  --color-leaf-deep: #062e1d;
-  --color-jamun: #4a1d33;
-  --color-jamun-deep: #331224;
+  /* Brand is jamun plum + ember copper + turmeric. The `leaf` token name is
+     kept for class stability but holds plum, so no green remains in the UI. */
+  --color-leaf: #5c1f38;
+  --color-leaf-deep: #381222;
+  --color-jamun: #9a3b26;
+  --color-jamun-deep: #2a0e1b;
   --color-marigold: #f2a007;
-  --color-marigold-deep: #c07a02;
+  --color-marigold-deep: #b56e02;
   --color-marigold-soft: #fce9bd;
-  --color-ledger: #edf1e2;
-  --color-counter: #ffffff;
-  --color-ink: #1d211c;
-  --color-ink-soft: #4d5850;
+  --color-ledger: #f6f0e1;
+  --color-counter: #fffdf7;
+  --color-ink: #251b12;
+  --color-ink-soft: #5d5347;
   --color-chili: #b3261e;
-  --color-line: #d3dbc4;
+  --color-line: #e3d7bd;
   --font-display: "Baloo 2", "Nunito", system-ui, sans-serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  --shadow-lift: 0 1px 2px rgb(6 46 29 / 0.06), 0 8px 24px -12px rgb(6 46 29 / 0.25);
-  --shadow-pop: 0 2px 6px rgb(6 46 29 / 0.12), 0 16px 40px -16px rgb(74 29 51 / 0.35);
+  --shadow-lift: 0 1px 2px rgb(56 18 34 / 0.08), 0 8px 24px -12px rgb(56 18 34 / 0.28);
+  --shadow-pop: 0 2px 6px rgb(56 18 34 / 0.14), 0 16px 40px -16px rgb(154 59 38 / 0.4);
 }
 
 body {
   background:
-    radial-gradient(rgb(11 74 47 / 0.055) 1px, transparent 1px) 0 0 / 22px 22px,
+    radial-gradient(rgb(92 31 56 / 0.06) 1px, transparent 1px) 0 0 / 22px 22px,
     var(--color-ledger);
   color: var(--color-ink);
   font-family: var(--font-sans);
