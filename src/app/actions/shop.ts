@@ -335,3 +335,92 @@ export async function deletePreset(presetId: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/presets");
 }
+
+async function addItemToPreset(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  presetId: string,
+  productId: string,
+  quantity: number,
+) {
+  const { data: row } = await supabase
+    .from("preset_items")
+    .select("quantity")
+    .eq("preset_id", presetId)
+    .eq("product_id", productId)
+    .maybeSingle();
+  const { error } = await supabase.from("preset_items").upsert(
+    {
+      preset_id: presetId,
+      product_id: productId,
+      quantity: (row?.quantity ?? 0) + quantity,
+    },
+    { onConflict: "preset_id,product_id" },
+  );
+  if (error) throw new Error(error.message);
+}
+
+/** Append one product to an existing preset owned by the caller. */
+export async function appendProductToPreset(
+  presetId: string,
+  shopId: string,
+  productId: string,
+  quantity: number,
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Please log in to save presets.");
+  const qty = Math.max(1, Math.floor(quantity));
+  const { data: preset } = await supabase
+    .from("presets")
+    .select("id, shop_id, customer_id")
+    .eq("id", presetId)
+    .single();
+  if (!preset || preset.customer_id !== user.id || preset.shop_id !== shopId)
+    throw new Error("Preset not found.");
+  const { data: product } = await supabase
+    .from("products")
+    .select("id")
+    .eq("id", productId)
+    .eq("shop_id", shopId)
+    .single();
+  if (!product) throw new Error("Product not found in this shop.");
+  await addItemToPreset(supabase, presetId, productId, qty);
+  revalidatePath("/presets");
+}
+
+/** Create (or reuse) a named preset and add one product to it. */
+export async function createPresetWithItem(
+  shopId: string,
+  name: string,
+  productId: string,
+  quantity: number,
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Please log in to save presets.");
+  const clean = name.trim().slice(0, 60);
+  if (!clean) throw new Error("Give the preset a name.");
+  const qty = Math.max(1, Math.floor(quantity));
+  const { data: product } = await supabase
+    .from("products")
+    .select("id")
+    .eq("id", productId)
+    .eq("shop_id", shopId)
+    .single();
+  if (!product) throw new Error("Product not found in this shop.");
+  const { data: preset, error } = await supabase
+    .from("presets")
+    .upsert(
+      { customer_id: user.id, shop_id: shopId, name: clean },
+      { onConflict: "customer_id,shop_id,name" },
+    )
+    .select("id")
+    .single();
+  if (error || !preset) throw new Error(error?.message ?? "Could not save preset.");
+  await addItemToPreset(supabase, preset.id, productId, qty);
+  revalidatePath("/presets");
+}

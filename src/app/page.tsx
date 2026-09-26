@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { getSession, getShops, searchProducts } from "@/lib/dal";
-import { AddButton } from "@/components/add-button";
-import { StockStamp } from "@/components/stock-stamp";
-import type { Product } from "@/lib/types";
+import { ProductCard } from "@/components/product-card";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +52,7 @@ export default async function Home({
       </section>
 
       {query ? (
-        <SearchResults query={query} shops={shops} />
+        <SearchResults query={query} shops={shops} loggedIn={!!user} />
       ) : (
         <ShopList shops={shops} />
       )}
@@ -125,7 +123,7 @@ function ShopList({ shops }: { shops: ShopSummary[] }) {
   );
 }
 
-async function SearchResults({ query, shops }: { query: string; shops: ShopSummary[] }) {
+async function SearchResults({ query, shops, loggedIn }: { query: string; shops: ShopSummary[]; loggedIn: boolean }) {
   const results = await searchProducts(query);
   const q = query.toLowerCase();
   const matchingShops = shops.filter(
@@ -167,39 +165,19 @@ async function SearchResults({ query, shops }: { query: string; shops: ShopSumma
           text="Nothing on any neighbourhood board matches that. Try atta, milk, or soap."
         />
       ) : (
-        <ul className="divide-y divide-line rounded-2xl bg-counter border border-line overflow-hidden">
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {results.map((p) => (
-            <ProductRow key={p.id} product={p} shopName={p.shop_name ?? ""} />
+            <ProductCard
+              key={p.id}
+              product={p}
+              shopName={p.shop_name ?? ""}
+              loggedIn={loggedIn}
+              nextPath="/"
+            />
           ))}
         </ul>
       )}
     </section>
-  );
-}
-
-export function ProductRow({
-  product,
-  shopName,
-}: {
-  product: Product;
-  shopName: string;
-}) {
-  return (
-    <li className="flex items-center gap-3 px-4 py-3">
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-[15px] truncate">{product.name}</p>
-        <p className="text-[13px] text-ink-soft">
-          {shopName ? `${shopName} · ` : ""}{product.category} ·{" "}
-          <span className="font-bold text-ink tnum">₹{Number(product.price).toFixed(2)}</span>
-          {" / "}{product.unit}
-        </p>
-      </div>
-      <StockStamp
-        stock={product.stock_quantity}
-        available={product.is_available}
-      />
-      <AddButton product={product} shopName={shopName} />
-    </li>
   );
 }
 

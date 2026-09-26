@@ -2,8 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getShop, getSession } from "@/lib/dal";
 import { getReorderCandidates } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/server";
-import { AddButton } from "@/components/add-button";
-import { StockStamp } from "@/components/stock-stamp";
+import { ProductCard } from "@/components/product-card";
 import { ReorderRail } from "@/components/reorder-rail";
 import { SuggestForm } from "@/components/suggest-form";
 
@@ -126,23 +125,15 @@ export default async function ShopPage({
             Nothing on the board matches. Clear the search to see everything.
           </p>
         ) : (
-          <ul className="divide-y divide-line">
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 p-4">
             {visible.map((p) => (
-              <li key={p.id} className="flex items-center gap-3 px-4 py-3">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-[15px] truncate">{p.name}</p>
-                  <p className="text-[13px] text-ink-soft">
-                    {p.category} ·{" "}
-                    <span className="font-bold text-ink tnum">₹{Number(p.price).toFixed(2)}</span>
-                    {" / "}{p.unit}
-                  </p>
-                </div>
-                <StockStamp
-                  stock={p.stock_quantity}
-                  available={p.is_available}
-                />
-                <AddButton product={p} shopName={shop.name} />
-              </li>
+              <ProductCard
+                key={p.id}
+                product={p}
+                shopName={shop.name}
+                loggedIn={!!user}
+                nextPath={`/shop/${shop.id}`}
+              />
             ))}
           </ul>
         )}
