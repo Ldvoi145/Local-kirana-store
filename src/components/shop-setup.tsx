@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   claimShopState,
@@ -42,8 +42,12 @@ export function ClaimButton({
 export function CreateShopForm() {
   const [message, dispatch, pending] = useActionState(createShopState, null);
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
-    if (message === "created") router.refresh();
+    if (message === "created") {
+      formRef.current?.reset();
+      router.refresh();
+    }
   }, [message, router]);
 
   return (
@@ -52,6 +56,7 @@ export function CreateShopForm() {
         Add your own shop
       </summary>
       <form
+        ref={formRef}
         action={dispatch}
         className="grid sm:grid-cols-3 gap-2 p-4 border-t border-line"
       >
@@ -61,6 +66,11 @@ export function CreateShopForm() {
         {message !== null && message !== "created" && (
           <p role="alert" className="text-sm text-chili sm:col-span-3">
             {message}
+          </p>
+        )}
+        {message === "created" && (
+          <p role="status" className="text-sm text-leaf font-semibold sm:col-span-3">
+            Shop created — loading your dashboard…
           </p>
         )}
         <button

@@ -75,6 +75,7 @@ export async function createShop(formData: FormData) {
     .single();
   if (error || !data) throw new Error(error?.message ?? "Could not add shop.");
   revalidatePath("/vendor");
+  revalidatePath("/", "layout");
 }
 
 export async function checkout(
