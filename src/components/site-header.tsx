@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/lib/cart";
 import type { User } from "@supabase/supabase-js";
@@ -18,12 +18,35 @@ export function SiteHeader({
   const { count } = useCart();
   const [query, setQuery] = useState("");
   const router = useRouter();
+  const pathname = usePathname();
 
   async function signOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/");
     router.refresh();
+  }
+
+  // Auth pages get a quiet brand-only header: no search, cart, or
+  // account controls until the user is inside the store.
+  if (pathname === "/login" || pathname === "/signup") {
+    return (
+      <header className="bg-leaf-deep text-white sticky top-0 z-10 shadow-md">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-center">
+          <Link href="/" className="flex items-center gap-2" aria-label="Kirana eStore home">
+            <span
+              aria-hidden
+              className="grid place-items-center w-9 h-9 rounded-lg bg-marigold text-leaf-deep font-display font-extrabold text-xl"
+            >
+              क
+            </span>
+            <span className="font-display font-bold text-lg tracking-tight">
+              Kirana eStore
+            </span>
+          </Link>
+        </div>
+      </header>
+    );
   }
 
   return (
