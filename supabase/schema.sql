@@ -108,6 +108,23 @@ create table if not exists order_events (
 create index if not exists order_events_order_idx
   on order_events (order_id, created_at);
 
+-- Customer item requests: the customer's write path to the vendor.
+create table if not exists suggestions (
+  id uuid primary key default gen_random_uuid(),
+  shop_id uuid not null references shops (id) on delete cascade,
+  customer_id uuid not null references profiles (id) on delete cascade,
+  customer_name text not null default '',
+  item_name text not null,
+  note text not null default '',
+  status text not null default 'Pending'
+    check (status in ('Pending', 'Approved', 'Rejected', 'Added')),
+  created_at timestamptz not null default now()
+);
+create index if not exists suggestions_shop_idx
+  on suggestions (shop_id, created_at desc);
+create index if not exists suggestions_customer_idx
+  on suggestions (customer_id, created_at desc);
+
 -- ---------- Auto-create profile on signup ----------
 create or replace function public.handle_new_user()
 returns trigger
@@ -248,6 +265,7 @@ alter table products enable row level security;
 alter table orders enable row level security;
 alter table order_items enable row level security;
 alter table order_events enable row level security;
+alter table suggestions enable row level security;
 alter table presets enable row level security;
 alter table preset_items enable row level security;
 
@@ -349,6 +367,26 @@ create policy order_events_writer_insert on order_events
       left join shops s on s.id = o.shop_id
       where o.id = order_events.order_id
         and (o.customer_id = auth.uid() or s.owner_id = auth.uid())));
+
+-- suggestions: customers write, vendors read/update own-shop rows
+drop policy if exists suggestions_customer_insert on suggestions;
+create policy suggestions_customer_insert on suggestions
+  for insert with check (auth.uid() = customer_id);
+drop policy if exists suggestions_customer_read on suggestions;
+create policy suggestions_customer_read on suggestions
+  for select using (auth.uid() = customer_id);
+drop policy if exists suggestions_vendor_read on suggestions;
+create policy suggestions_vendor_read on suggestions
+  for select using (exists (
+    select 1 from shops s
+    where s.id = suggestions.shop_id
+      and s.owner_id = auth.uid()));
+drop policy if exists suggestions_vendor_update on suggestions;
+create policy suggestions_vendor_update on suggestions
+  for update using (exists (
+    select 1 from shops s
+    where s.id = suggestions.shop_id
+      and s.owner_id = auth.uid()));
 
 -- presets: owner-only
 drop policy if exists presets_owner on presets;

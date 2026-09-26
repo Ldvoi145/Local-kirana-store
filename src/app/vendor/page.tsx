@@ -11,6 +11,7 @@ import {
   toggleShopOpen,
   updateOrderStatus,
   updateProduct,
+  updateSuggestionStatus,
 } from "@/app/actions/shop";
 import { ClaimButton, CreateShopForm } from "@/components/shop-setup";
 import { AddProductForm } from "@/components/inventory-forms";
@@ -25,7 +26,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-type Tab = "orders" | "inventory" | "insights" | "transactions";
+type Tab = "orders" | "inventory" | "insights" | "transactions" | "requests";
 
 export default async function VendorPage({
   searchParams,
@@ -68,22 +69,29 @@ export default async function VendorPage({
   const tab: Tab =
     params.tab === "inventory" ||
     params.tab === "insights" ||
-    params.tab === "transactions"
+    params.tab === "transactions" ||
+    params.tab === "requests"
       ? params.tab
       : "orders";
 
-  const [{ data: orders }, { data: products }] = await Promise.all([
-    supabase
-      .from("orders")
-      .select("*, order_items(*)")
-      .eq("shop_id", shop.id)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("products")
-      .select("*")
-      .eq("shop_id", shop.id)
-      .order("name"),
-  ]);
+  const [{ data: orders }, { data: products }, { data: suggestions }] =
+    await Promise.all([
+      supabase
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq("shop_id", shop.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("products")
+        .select("*")
+        .eq("shop_id", shop.id)
+        .order("name"),
+      supabase
+        .from("suggestions")
+        .select("*")
+        .eq("shop_id", shop.id)
+        .order("created_at", { ascending: false }),
+    ]);
 
   const txRows = (orders ?? []).map((o) =>
     toTxRow(o as unknown as Parameters<typeof toTxRow>[0]),
@@ -158,7 +166,7 @@ export default async function VendorPage({
       </section>
 
       <nav className="flex gap-1 rounded-2xl bg-counter border border-line p-1.5" aria-label="Vendor sections">
-        {(["orders", "transactions", "inventory", "insights"] as Tab[]).map((t) => (
+        {(["orders", "transactions", "requests", "inventory", "insights"] as Tab[]).map((t) => (
           <Link
             key={t}
             href={`/vendor?shop=${shop.id}&tab=${t}`}
@@ -171,9 +179,11 @@ export default async function VendorPage({
               ? `Orders (${orders?.length ?? 0})`
               : t === "transactions"
                 ? `Transactions (${filteredTx.length})`
-                : t === "inventory"
-                  ? `Inventory (${products?.length ?? 0})`
-                  : "Insights"}
+                : t === "requests"
+                  ? `Requests (${suggestions?.length ?? 0})`
+                  : t === "inventory"
+                    ? `Inventory (${products?.length ?? 0})`
+                    : "Insights"}
           </Link>
         ))}
       </nav>
@@ -199,6 +209,13 @@ export default async function VendorPage({
           filters={txFilters}
           paySplit={paySplit}
           csv={txCsv}
+        />
+      )}
+
+      {tab === "requests" && (
+        <RequestsPane
+          shopId={shop.id}
+          suggestions={(suggestions ?? []) as unknown as SuggestionRow[]}
         />
       )}
 
@@ -529,6 +546,80 @@ function TransactionsPane({
           </table>
         )}
       </div>
+    </div>
+  );
+}
+
+interface SuggestionRow {
+  id: string;
+  customer_name: string;
+  item_name: string;
+  note: string;
+  status: string;
+  created_at: string;
+}
+
+function RequestsPane({
+  shopId,
+  suggestions,
+}: {
+  shopId: string;
+  suggestions: SuggestionRow[];
+}) {
+  const pending = suggestions.filter((s) => s.status === "Pending").length;
+  if (suggestions.length === 0)
+    return (
+      <div className="rounded-2xl bg-counter border border-line p-8 text-center text-sm text-ink-soft">
+        No customer requests yet. When a customer asks for an item from your
+        rate board, it lands here.
+      </div>
+    );
+  return (
+    <div className="rounded-2xl bg-counter border border-line p-4 space-y-2">
+      <p className="text-sm text-ink-soft">
+        {pending} waiting · approve what you&apos;ll stock, reject what you won&apos;t.
+        Mark Added once it&apos;s on the rate board.
+      </p>
+      <ul className="divide-y divide-line">
+        {suggestions.map((s) => (
+          <li key={s.id} className="flex flex-wrap items-center gap-2 py-3">
+            <div className="flex-1 min-w-44">
+              <p className="font-semibold">{s.item_name}</p>
+              <p className="text-xs text-ink-soft">
+                {s.customer_name} · {new Date(s.created_at).toLocaleString()}
+                {s.note ? ` · “${s.note}”` : ""}
+              </p>
+            </div>
+            <span className="rounded-full border border-line px-2.5 py-0.5 text-xs font-semibold">
+              {s.status}
+            </span>
+            <form
+              action={updateSuggestionStatus.bind(null, shopId, s.id)}
+              className="flex gap-1"
+            >
+              <select
+                name="status"
+                defaultValue={s.status}
+                aria-label={`Status for request ${s.item_name}`}
+                className="rounded-lg border border-line text-sm px-2 py-1 bg-ledger"
+              >
+                {["Pending", "Approved", "Rejected", "Added"].map((st) => (
+                  <option key={st} value={st}>
+                    {st}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                aria-label="Save request status"
+                className="rounded-lg border border-line px-2 text-sm font-bold hover:bg-ledger"
+              >
+                ✓
+              </button>
+            </form>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

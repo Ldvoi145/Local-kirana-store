@@ -65,6 +65,19 @@ export interface OrderEvent {
   created_at: string;
 }
 
+export type SuggestionStatus = "Pending" | "Approved" | "Rejected" | "Added";
+
+export interface Suggestion {
+  id: string;
+  shop_id: string;
+  customer_id: string;
+  customer_name: string;
+  item_name: string;
+  note: string;
+  status: SuggestionStatus;
+  created_at: string;
+}
+
 export const PAYMENT_METHODS = [
   "Cash on Delivery",
   "UPI",

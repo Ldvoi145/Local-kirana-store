@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AddButton } from "@/components/add-button";
 import { StockStamp } from "@/components/stock-stamp";
 import { ReorderRail } from "@/components/reorder-rail";
+import { SuggestForm } from "@/components/suggest-form";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,14 @@ export default async function ShopPage({
     const supabase = await createClient();
     reorder = await getReorderCandidates(supabase, user.id, id);
   }
+  const supabase = await createClient();
+  const { data: myRequests } = await supabase
+    .from("suggestions")
+    .select("id, item_name, status, created_at")
+    .eq("shop_id", id)
+    .eq("customer_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(5);
 
   return (
     <div className="space-y-6">
@@ -125,6 +134,26 @@ export default async function ShopPage({
           </ul>
         )}
       </section>
+
+      {user.id !== shop.owner_id && (
+        <SuggestForm shopId={shop.id} shopName={shop.name} />
+      )}
+      {(myRequests ?? []).length > 0 && (
+        <section className="rounded-2xl bg-counter border border-line p-5">
+          <h2 className="font-display font-bold text-lg">Your requests</h2>
+          <ul className="mt-2 space-y-2">
+            {(myRequests ?? []).map((r) => (
+              <li
+                key={r.id}
+                className="flex flex-wrap items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm"
+              >
+                <span className="font-semibold flex-1">{r.item_name}</span>
+                <span className="text-xs text-ink-soft">{r.status}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

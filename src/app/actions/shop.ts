@@ -240,6 +240,66 @@ export async function deleteProduct(shopId: string, productId: string) {
   revalidatePath("/vendor");
 }
 
+export async function suggestItem(shopId: string, formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Please log in to send a suggestion.");
+  const itemName = String(formData.get("item_name") ?? "").trim().slice(0, 80);
+  if (itemName.length < 2) throw new Error("Name the item you want.");
+  const note = String(formData.get("note") ?? "").trim().slice(0, 240);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name")
+    .eq("id", user.id)
+    .single();
+  const { error } = await supabase.from("suggestions").insert({
+    shop_id: shopId,
+    customer_id: user.id,
+    customer_name:
+      (profile as unknown as { name: string | null } | null)?.name?.trim() ||
+      "Neighbour",
+    item_name: itemName,
+    note,
+    status: "Pending",
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/shop/${shopId}`);
+  revalidatePath("/vendor");
+}
+
+export async function suggestItemState(
+  shopId: string,
+  _prev: string | null,
+  formData: FormData,
+): Promise<string> {
+  try {
+    await suggestItem(shopId, formData);
+    return "sent";
+  } catch (e) {
+    return e instanceof Error ? e.message : "Could not send suggestion.";
+  }
+}
+
+export async function updateSuggestionStatus(
+  shopId: string,
+  suggestionId: string,
+  formData: FormData,
+) {
+  const { supabase } = await requireVendorShop(shopId);
+  const status = String(formData.get("status") ?? "");
+  if (!["Pending", "Approved", "Rejected", "Added"].includes(status))
+    throw new Error("Invalid status.");
+  const { error } = await supabase
+    .from("suggestions")
+    .update({ status })
+    .eq("id", suggestionId)
+    .eq("shop_id", shopId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/vendor");
+}
+
 export async function savePreset(shopId: string, name: string, lines: CartLine[]) {
   const supabase = await createClient();
   const {
