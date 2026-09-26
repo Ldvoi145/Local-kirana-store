@@ -80,10 +80,8 @@ export function VendorLiveListener({ shopId }: { shopId: string }) {
     };
   }, [shopId]);
 
-  // Shop switched: old shop's alerts don't carry over.
-  useEffect(() => {
-    setAlerts([]);
-  }, [shopId]);
+  // Note: the parent keys this component by shopId, so switching shops
+  // remounts it with a fresh empty alert list.
 
   if (alerts.length === 0) return null;
 
