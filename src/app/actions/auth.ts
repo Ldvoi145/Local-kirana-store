@@ -37,7 +37,11 @@ export async function login(_prev: string | null, formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return "Invalid email or password.";
+  if (error) {
+    if (error.message.toLowerCase().includes("invalid login credentials"))
+      return "Invalid email or password.";
+    return error.message;
+  }
   revalidatePath("/", "layout");
   redirect(getNext(formData));
 }
