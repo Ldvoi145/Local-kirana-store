@@ -4,21 +4,53 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { CartLine } from "@/lib/types";
 
-async function requireVendorShop(shopId: string) {
+async function requireVendor() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated.");
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (profile?.role !== "vendor")
+    throw new Error("A shopkeeper account is required.");
+  return { supabase, user };
+}
+
+async function requireVendorShop(shopId: string) {
+  const { supabase, user } = await requireVendor();
   const { data: shop } = await supabase
     .from("shops")
     .select("id, owner_id")
     .eq("id", shopId)
     .single();
   if (!shop) throw new Error("Shop not found.");
-  if (shop.owner_id !== null && shop.owner_id !== user.id)
-    throw new Error("Not your shop.");
+  if (shop.owner_id !== user.id)
+    throw new Error("This is not your store. Claim it first.");
   return { supabase, user };
+}
+
+export async function createShop(formData: FormData) {
+  const { supabase, user } = await requireVendor();
+  const name = String(formData.get("name") ?? "").trim().slice(0, 80);
+  if (name.length < 2) throw new Error("Give the shop a name.");
+  const { data, error } = await supabase
+    .from("shops")
+    .insert({
+      owner_id: user.id,
+      name,
+      address: String(formData.get("address") ?? "").trim() || null,
+      timings:
+        String(formData.get("timings") ?? "").trim() || "7:00 AM - 9:30 PM",
+      is_open: true,
+    })
+    .select("id")
+    .single();
+  if (error || !data) throw new Error(error?.message ?? "Could not add shop.");
+  revalidatePath("/vendor");
 }
 
 export async function checkout(
@@ -71,7 +103,14 @@ export async function updateOrderStatus(
 }
 
 export async function claimShop(shopId: string) {
-  const { supabase, user } = await requireVendorShop(shopId);
+  const { supabase, user } = await requireVendor();
+  const { data: shop } = await supabase
+    .from("shops")
+    .select("id, owner_id")
+    .eq("id", shopId)
+    .single();
+  if (!shop) throw new Error("Shop not found.");
+  if (shop.owner_id !== null) throw new Error("Already claimed.");
   const { error } = await supabase
     .from("shops")
     .update({ owner_id: user.id })

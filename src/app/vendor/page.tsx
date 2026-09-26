@@ -9,6 +9,7 @@ import {
 import {
   addProduct,
   claimShop,
+  createShop,
   deleteProduct,
   toggleShopOpen,
   updateOrderStatus,
@@ -32,21 +33,22 @@ export default async function VendorPage({
     );
 
   const supabase = await createClient();
-  const { data: shops } = await supabase
+  const { data: allShops } = await supabase
     .from("shops")
     .select("*")
-    .or(`owner_id.eq.${user.id},owner_id.is.null`)
     .order("name");
-  if (!shops || shops.length === 0)
-    return (
-      <Gate text="No shops available. Ask an admin to add your store, then claim it here." />
-    );
+  const owned = (allShops ?? []).filter((s) => s.owner_id === user.id);
+  const unclaimed = (allShops ?? []).filter((s) => s.owner_id === null);
 
   const params = await searchParams;
-  const shop =
-    shops.find((s) => s.id === params.shop) ??
-    shops.find((s) => s.owner_id === user.id) ??
-    shops[0];
+  const shop = owned.find((s) => s.id === params.shop) ?? owned[0] ?? null;
+  if (!shop)
+    return (
+      <div className="space-y-4">
+        <Gate text="Your shopkeeper account has no store yet. Claim a demo shop below or add your own." />
+        <ClaimOrCreate unclaimed={unclaimed} />
+      </div>
+    );
   const tab: Tab =
     params.tab === "inventory" || params.tab === "insights"
       ? params.tab
@@ -83,16 +85,8 @@ export default async function VendorPage({
             <h1 className="font-display font-bold text-2xl">{shop.name}</h1>
             <p className="text-sm text-ink-soft">
               {shop.address} · {shop.is_open ? "Open" : "Closed"}
-              {shop.owner_id === null && " · Unclaimed demo shop"}
             </p>
           </div>
-          <form action={claimShop.bind(null, shop.id)}>
-            {shop.owner_id === null && (
-              <button className="rounded-lg bg-marigold text-ink text-sm font-bold px-3 py-1.5 hover:brightness-95">
-                Claim this shop
-              </button>
-            )}
-          </form>
           <form action={toggleShopOpen.bind(null, shop.id, !shop.is_open)}>
             <button className="rounded-lg border border-line text-sm font-semibold px-3 py-1.5 hover:bg-ledger">
               Mark {shop.is_open ? "closed" : "open"}
@@ -106,7 +100,7 @@ export default async function VendorPage({
           </Link>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          {shops.map((s) => (
+          {owned.map((s) => (
             <Link
               key={s.id}
               href={`/vendor?shop=${s.id}&tab=${tab}`}
@@ -118,7 +112,6 @@ export default async function VendorPage({
               }`}
             >
               {s.name}
-              {s.owner_id === null ? " · unclaimed" : ""}
             </Link>
           ))}
         </div>
@@ -163,7 +156,59 @@ export default async function VendorPage({
         />
       )}
       {tab === "insights" && <InsightsPane shopId={shop.id} />}
+
+      <ClaimOrCreate unclaimed={unclaimed} />
     </div>
+  );
+}
+
+function ClaimOrCreate({
+  unclaimed,
+}: {
+  unclaimed: { id: string; name: string; address: string | null }[];
+}) {
+  return (
+    <section className="rounded-2xl bg-counter border border-line p-5">
+      <h2 className="font-display font-bold text-xl">Your stores</h2>
+      <p className="text-sm text-ink-soft">
+        You manage only stores you own. Claim a demo shop or add your own.
+      </p>
+      {unclaimed.length > 0 && (
+        <ul className="mt-3 space-y-2">
+          {unclaimed.map((s) => (
+            <li
+              key={s.id}
+              className="flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm"
+            >
+              <span className="flex-1 font-semibold">
+                {s.name}
+                <span className="block font-normal text-ink-soft text-xs">
+                  Unclaimed demo shop
+                </span>
+              </span>
+              <form action={claimShop.bind(null, s.id)}>
+                <button className="rounded-lg bg-marigold text-ink text-sm font-bold px-3 py-1.5 hover:brightness-95">
+                  Claim
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+      <details className="mt-3 rounded-xl border border-line">
+        <summary className="cursor-pointer px-4 py-2.5 text-sm font-semibold hover:bg-ledger rounded-xl">
+          Add your own shop
+        </summary>
+        <form action={createShop} className="grid sm:grid-cols-3 gap-2 p-4 border-t border-line">
+          <input name="name" required minLength={2} placeholder="Shop name" aria-label="Shop name" className="rounded-lg border border-line px-3 py-2 text-sm" />
+          <input name="address" placeholder="Address" aria-label="Address" className="rounded-lg border border-line px-3 py-2 text-sm" />
+          <input name="timings" placeholder="Timings" aria-label="Timings" className="rounded-lg border border-line px-3 py-2 text-sm" />
+          <button className="rounded-lg bg-leaf text-white text-sm font-semibold px-4 py-2 hover:bg-leaf-deep sm:col-span-3">
+            Add shop
+          </button>
+        </form>
+      </details>
+    </section>
   );
 }
 

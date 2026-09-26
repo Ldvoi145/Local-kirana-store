@@ -239,7 +239,8 @@ create policy shops_vendor_update on shops
   using (owner_id = auth.uid() or owner_id is null)
   with check (owner_id = auth.uid());
 
--- products: public catalogue; editable through owned (or unclaimed demo) shops
+-- products: public catalogue; editable only through shops the vendor owns.
+-- Unclaimed demo shops must be claimed first (see shops_vendor_update).
 drop policy if exists products_public_read on products;
 create policy products_public_read on products
   for select using (true);
@@ -249,11 +250,11 @@ create policy products_vendor_write on products
   using (exists (
     select 1 from shops s
     where s.id = products.shop_id
-      and (s.owner_id = auth.uid() or s.owner_id is null)))
+      and s.owner_id = auth.uid()))
   with check (exists (
     select 1 from shops s
     where s.id = products.shop_id
-      and (s.owner_id = auth.uid() or s.owner_id is null)));
+      and s.owner_id = auth.uid()));
 
 -- orders: customers see own; vendors see orders for shops they own
 drop policy if exists orders_customer_read on orders;

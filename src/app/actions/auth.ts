@@ -20,12 +20,14 @@ export async function signup(_prev: string | null, formData: FormData) {
   if (password.length < 6) return "Password must be at least 6 characters long.";
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: { data: { name, role } },
   });
   if (error) return error.message;
+  if (!data.session)
+    return "Account created. Confirm the link in your email, then log in.";
   revalidatePath("/", "layout");
   redirect(getNext(formData));
 }
