@@ -1,0 +1,127 @@
+import { notFound } from "next/navigation";
+import { getShop, getSession } from "@/lib/dal";
+import { getReorderCandidates } from "@/lib/analytics";
+import { createClient } from "@/lib/supabase/server";
+import { AddButton } from "@/components/add-button";
+import { StockStamp } from "@/components/stock-stamp";
+import { ReorderRail } from "@/components/reorder-rail";
+
+export const dynamic = "force-dynamic";
+
+export default async function ShopPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ q?: string; category?: string }>;
+}) {
+  const { id } = await params;
+  const data = await getShop(id);
+  if (!data) notFound();
+  const { shop, products, categories } = data;
+  const { q, category } = await searchParams;
+  const query = (q ?? "").trim().toLowerCase();
+
+  const visible = products.filter((p) => {
+    if (category && p.category !== category) return false;
+    if (
+      query &&
+      !`${p.name} ${p.category}`.toLowerCase().includes(query)
+    )
+      return false;
+    return true;
+  });
+
+  const { user } = await getSession();
+  let reorder: Awaited<ReturnType<typeof getReorderCandidates>> = [];
+  if (user) {
+    const supabase = await createClient();
+    reorder = await getReorderCandidates(supabase, user.id, id);
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl bg-counter border border-line p-6">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-display font-bold text-3xl">{shop.name}</h1>
+            <p className="text-sm text-ink-soft">
+              {shop.address} · {shop.timings}
+            </p>
+            <p className="mt-1 text-sm">{shop.description}</p>
+          </div>
+          <span
+            className={`shrink-0 rounded-full text-xs font-semibold px-2.5 py-0.5 border ${
+              shop.is_open
+                ? "bg-leaf/10 text-leaf border-leaf/30"
+                : "bg-ink/5 text-ink-soft border-line"
+            }`}
+          >
+            {shop.is_open ? "Open" : "Closed"}
+          </span>
+        </div>
+        <form className="mt-4 flex flex-wrap gap-2" method="get">
+          <input
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder={`Search inside ${shop.name}`}
+            aria-label="Search inside this shop"
+            className="flex-1 min-w-52 rounded-lg border border-line px-3 py-2 text-sm bg-ledger"
+          />
+          <select
+            name="category"
+            defaultValue={category ?? ""}
+            aria-label="Filter by category"
+            className="rounded-lg border border-line px-3 py-2 text-sm bg-ledger"
+          >
+            <option value="">All categories</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="rounded-lg bg-leaf text-white text-sm font-semibold px-4 py-2 hover:bg-leaf-deep"
+          >
+            Filter
+          </button>
+        </form>
+      </section>
+
+      {user && reorder.length > 0 && (
+        <ReorderRail items={reorder.slice(0, 6)} shopName={shop.name} />
+      )}
+
+      <section className="rounded-2xl bg-counter border border-line overflow-hidden">
+        <h2 className="font-display font-bold text-xl px-4 pt-4">
+          Rate board · {visible.length} items
+        </h2>
+        {visible.length === 0 ? (
+          <p className="p-8 text-center text-ink-soft text-sm">
+            Nothing on the board matches. Clear the search to see everything.
+          </p>
+        ) : (
+          <ul className="divide-y divide-line">
+            {visible.map((p) => (
+              <li key={p.id} className="flex items-center gap-3 p-4">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">{p.name}</p>
+                  <p className="text-sm text-ink-soft">
+                    {p.category} · ₹{Number(p.price).toFixed(2)} / {p.unit}
+                  </p>
+                </div>
+                <StockStamp
+                  stock={p.stock_quantity}
+                  available={p.is_available}
+                />
+                <AddButton product={p} shopName={shop.name} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}

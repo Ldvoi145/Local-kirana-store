@@ -1,0 +1,174 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/lib/cart";
+import { checkout, savePreset } from "@/app/actions/shop";
+
+export default function CartPage() {
+  const { lines, total, shopName, setQty, remove, clear } = useCart();
+  const [orderType, setOrderType] = useState<"Pickup" | "Delivery">("Pickup");
+  const [address, setAddress] = useState("");
+  const [presetName, setPresetName] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const router = useRouter();
+
+  async function placeOrder() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const orderId = await checkout(lines, orderType, address, "Cash on Delivery");
+      clear();
+      router.push(`/order/${orderId}`);
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Could not place the order.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function save() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      await savePreset(lines[0].shop_id, presetName, lines);
+      setMessage(`Saved preset “${presetName.trim()}”. Find it under Presets.`);
+      setPresetName("");
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Could not save the preset.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (lines.length === 0)
+    return (
+      <div className="rounded-2xl bg-counter border border-line p-8 text-center">
+        <h1 className="font-display font-bold text-2xl">Your cart is empty</h1>
+        <p className="mt-1 text-sm text-ink-soft">
+          Walk down the street on the <Link href="/" className="text-leaf font-semibold">home page</Link> and
+          fill it from a nearby rate board.
+        </p>
+      </div>
+    );
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+      <section className="rounded-2xl bg-counter border border-line overflow-hidden h-fit">
+        <h1 className="font-display font-bold text-2xl px-4 pt-4">
+          Cart · {shopName}
+        </h1>
+        <ul className="divide-y divide-line">
+          {lines.map((l) => (
+            <li key={l.product_id} className="flex items-center gap-3 p-4">
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate">{l.name}</p>
+                <p className="text-sm text-ink-soft">
+                  ₹{l.price.toFixed(2)} / {l.unit}
+                </p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  aria-label={`Decrease quantity of ${l.name}`}
+                  onClick={() => setQty(l.product_id, l.quantity - 1)}
+                  className="w-8 h-8 rounded-lg border border-line font-bold hover:bg-ledger"
+                >
+                  −
+                </button>
+                <span className="w-8 text-center font-semibold">{l.quantity}</span>
+                <button
+                  aria-label={`Increase quantity of ${l.name}`}
+                  onClick={() => setQty(l.product_id, l.quantity + 1)}
+                  className="w-8 h-8 rounded-lg border border-line font-bold hover:bg-ledger"
+                >
+                  +
+                </button>
+              </div>
+              <span className="w-20 text-right font-bold">
+                ₹{(l.price * l.quantity).toFixed(2)}
+              </span>
+              <button
+                onClick={() => remove(l.product_id)}
+                className="text-sm text-chili hover:underline"
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="p-4 flex justify-between items-center border-t border-line">
+          <button onClick={clear} className="text-sm text-ink-soft hover:underline">
+            Clear cart
+          </button>
+          <p className="font-display font-bold text-xl">₹{total.toFixed(2)}</p>
+        </div>
+      </section>
+
+      <section className="rounded-2xl bg-counter border border-line p-5 space-y-4 h-fit">
+        <div>
+          <h2 className="font-display font-bold text-xl">Checkout</h2>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {(["Pickup", "Delivery"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setOrderType(t)}
+                aria-pressed={orderType === t}
+                className={`rounded-lg border px-3 py-2 text-sm font-semibold ${
+                  orderType === t
+                    ? "bg-leaf text-white border-leaf"
+                    : "border-line hover:bg-ledger"
+                }`}
+              >
+                {t === "Pickup" ? "Store pickup" : "Home delivery"}
+              </button>
+            ))}
+          </div>
+          {orderType === "Delivery" && (
+            <textarea
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="House, street, landmark"
+              aria-label="Delivery address"
+              rows={2}
+              className="mt-2 w-full rounded-lg border border-line px-3 py-2 text-sm"
+            />
+          )}
+          <p className="mt-2 text-sm text-ink-soft">Pay cash or UPI at pickup or the doorstep.</p>
+        </div>
+        <button
+          onClick={placeOrder}
+          disabled={busy}
+          className="w-full rounded-lg bg-marigold text-ink font-bold py-2.5 hover:brightness-95 disabled:opacity-50"
+        >
+          {busy ? "Placing order" : `Place order · ₹${total.toFixed(2)}`}
+        </button>
+        <div className="border-t border-line pt-4">
+          <h3 className="font-semibold text-sm">Save this cart as a preset</h3>
+          <div className="mt-2 flex gap-2">
+            <input
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              placeholder="Monthly ration"
+              aria-label="Preset name"
+              className="flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+            />
+            <button
+              onClick={save}
+              disabled={busy || !presetName.trim()}
+              className="rounded-lg bg-leaf text-white text-sm font-semibold px-4 hover:bg-leaf-deep disabled:opacity-50"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+        {message && (
+          <p role="status" className="text-sm text-ink">
+            {message}
+          </p>
+        )}
+      </section>
+    </div>
+  );
+}
