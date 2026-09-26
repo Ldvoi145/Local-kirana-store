@@ -1,8 +1,10 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { getShop, getSession } from "@/lib/dal";
 import { getReorderCandidates } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/product-card";
+import { PresetAddCard } from "@/components/preset-add-card";
 import { ReorderRail } from "@/components/reorder-rail";
 import { SuggestForm } from "@/components/suggest-form";
 
@@ -13,7 +15,7 @@ export default async function ShopPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; preset?: string }>;
 }) {
   const { id } = await params;
   const { user } = await getSession();
@@ -23,7 +25,7 @@ export default async function ShopPage({
   const data = await getShop(id);
   if (!data) notFound();
   const { shop, products, categories } = data;
-  const { q, category } = await searchParams;
+  const { q, category, preset: presetParam } = await searchParams;
   const query = (q ?? "").trim().toLowerCase();
 
   const visible = products.filter((p) => {
@@ -49,6 +51,38 @@ export default async function ShopPage({
     .eq("customer_id", user.id)
     .order("created_at", { ascending: false })
     .limit(5);
+
+  // Preset-building context: ?preset=<id> turns this inventory into an
+  // "Add items" picker for one owned preset of THIS shop. Anything else
+  // falls back to normal shopping mode.
+  let activePreset: {
+    id: string;
+    name: string;
+    quantities: Record<string, number>;
+  } | null = null;
+  if (presetParam) {
+    const { data: prow } = await supabase
+      .from("presets")
+      .select("id, name, shop_id, preset_items(product_id, quantity)")
+      .eq("id", presetParam)
+      .eq("customer_id", user.id)
+      .single();
+    const typed = prow as unknown as {
+      id: string;
+      name: string;
+      shop_id: string;
+      preset_items: { product_id: string; quantity: number }[];
+    } | null;
+    if (typed && typed.shop_id === id) {
+      activePreset = {
+        id: typed.id,
+        name: typed.name,
+        quantities: Object.fromEntries(
+          typed.preset_items.map((i) => [i.product_id, i.quantity]),
+        ),
+      };
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -120,10 +154,35 @@ export default async function ShopPage({
           </h2>
           <p className="text-xs text-ink-soft tnum">{visible.length} items</p>
         </div>
+        {activePreset && (
+          <div className="mx-4 mt-2 rounded-xl border border-leaf/40 bg-leaf/5 px-4 py-2.5 text-sm flex flex-wrap items-center gap-2">
+            <span>
+              Adding to preset{" "}
+              <span className="font-bold">{activePreset.name}</span>
+            </span>
+            <Link
+              href={`/presets/${activePreset.id}`}
+              className="ml-auto rounded-lg bg-leaf text-white text-xs font-bold px-3 py-1.5 hover:bg-leaf-deep"
+            >
+              Done — back to preset
+            </Link>
+          </div>
+        )}
         {visible.length === 0 ? (
           <p className="p-8 text-center text-ink-soft text-sm">
             Nothing on the board matches. Clear the search to see everything.
           </p>
+        ) : activePreset ? (
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 p-4">
+            {visible.map((p) => (
+              <PresetAddCard
+                key={p.id}
+                product={p}
+                presetId={activePreset.id}
+                initialQty={activePreset.quantities[p.id] ?? 0}
+              />
+            ))}
+          </ul>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 p-4">
             {visible.map((p) => (

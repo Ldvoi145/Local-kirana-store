@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart";
-import { checkout, savePreset } from "@/app/actions/shop";
+import { checkout } from "@/app/actions/shop";
 import { PAYMENT_METHODS } from "@/lib/types";
 
 export default function CartPage() {
@@ -12,7 +12,6 @@ export default function CartPage() {
   const [orderType, setOrderType] = useState<"Pickup" | "Delivery">("Pickup");
   const [payment, setPayment] = useState<string>(PAYMENT_METHODS[0]);
   const [address, setAddress] = useState("");
-  const [presetName, setPresetName] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
@@ -26,20 +25,6 @@ export default function CartPage() {
       router.push(`/order/${orderId}`);
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Could not place the order.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function save() {
-    setBusy(true);
-    setMessage(null);
-    try {
-      await savePreset(lines[0].shop_id, presetName, lines);
-      setMessage(`Saved preset “${presetName.trim()}”. Find it under Presets.`);
-      setPresetName("");
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Could not save the preset.");
     } finally {
       setBusy(false);
     }
@@ -162,23 +147,17 @@ export default function CartPage() {
           {busy ? "Placing order…" : `Place order · ₹${total.toFixed(2)}`}
         </button>
         <div className="border-t border-line pt-4">
-          <h3 className="font-semibold text-sm">Save this cart as a preset</h3>
-          <div className="mt-2 flex gap-2">
-            <input
-              value={presetName}
-              onChange={(e) => setPresetName(e.target.value)}
-              placeholder="Monthly ration"
-              aria-label="Preset name"
-              className="flex-1 rounded-lg border border-line px-3 py-2 text-sm"
-            />
-            <button
-              onClick={save}
-              disabled={busy || !presetName.trim()}
-              className="rounded-lg bg-counter border border-leaf text-leaf text-sm font-semibold px-4 hover:bg-leaf/5 active:bg-leaf/10 disabled:opacity-50"
-            >
-              Save
-            </button>
-          </div>
+          <h3 className="font-semibold text-sm">Make this a reusable list</h3>
+          <p className="mt-1 text-sm text-ink-soft">
+            Presets live in the Presets tab: pick the shop, name the list,
+            then add items.
+          </p>
+          <Link
+            href="/presets"
+            className="mt-2 inline-block rounded-lg bg-counter border border-leaf text-leaf text-sm font-semibold px-4 py-2 hover:bg-leaf/5"
+          >
+            Go to Presets
+          </Link>
         </div>
         {message && (
           <p role="status" className="text-sm text-ink">

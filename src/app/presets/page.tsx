@@ -1,21 +1,29 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/dal";
+import { getSession, getShops } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
-import { PresetList } from "@/components/preset-list";
+import { PresetsManager } from "@/components/presets-manager";
 import type { Preset, Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function PresetsPage() {
+export default async function PresetsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ create?: string }>;
+}) {
   const { user } = await getSession();
   if (!user) redirect("/login?next=/presets");
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("presets")
-    .select("*, shops(name), preset_items(*, products(*))")
-    .eq("customer_id", user.id)
-    .order("created_at", { ascending: false });
+  const { create: createShopId } = await searchParams;
+
+  const [{ data }, shops] = await Promise.all([
+    supabase
+      .from("presets")
+      .select("*, shops(name), preset_items(*, products(*))")
+      .eq("customer_id", user.id)
+      .order("created_at", { ascending: false }),
+    getShops(),
+  ]);
 
   const presets: Preset[] = (data ?? []).map((row) => {
     const p = row as unknown as {
@@ -47,23 +55,14 @@ export default async function PresetsPage() {
   });
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex-1 min-w-52">
-          <h1 className="font-display font-bold text-3xl">Your presets</h1>
-          <p className="text-sm text-ink-soft">
-            Named carts such as “Monthly ration”. Tap one to load it into the cart and check
-            out in seconds. To create one, fill a cart at any shop and tap Save as preset.
-          </p>
-        </div>
-        <Link
-          href="/"
-          className="rounded-lg bg-leaf text-white text-sm font-bold px-4 py-2 hover:bg-leaf-deep"
-        >
-          New preset — pick a shop
-        </Link>
-      </div>
-      <PresetList presets={presets} />
-    </div>
+    <PresetsManager
+      presets={presets}
+      shops={shops.map((s) => ({
+        id: s.id,
+        name: s.name,
+        product_count: s.product_count ?? 0,
+      }))}
+      initialCreateShopId={createShopId ?? null}
+    />
   );
 }
