@@ -4,7 +4,13 @@ import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { addProductState } from "@/app/actions/shop";
 
-export function AddProductForm({ shopId }: { shopId: string }) {
+export function AddProductForm({
+  shopId,
+  defaultOpen,
+}: {
+  shopId: string;
+  defaultOpen?: boolean;
+}) {
   const [message, dispatch, pending] = useActionState(
     addProductState.bind(null, shopId),
     null,
@@ -20,9 +26,9 @@ export function AddProductForm({ shopId }: { shopId: string }) {
   }, [message, router]);
 
   return (
-    <details className="rounded-xl border border-line">
+    <details className="rounded-xl border border-line" open={defaultOpen}>
       <summary className="cursor-pointer px-4 py-3 font-semibold text-sm hover:bg-ledger rounded-xl">
-        Add a new product
+        + Add a new product
       </summary>
       <form
         ref={formRef}

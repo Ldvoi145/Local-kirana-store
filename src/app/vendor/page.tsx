@@ -640,8 +640,14 @@ function InventoryPane({
 }) {
   return (
     <div className="rounded-2xl bg-counter border border-line p-4 space-y-4">
-      <AddProductForm shopId={shopId} />
+      <AddProductForm shopId={shopId} defaultOpen={products.length === 0} />
 
+      {products.length === 0 ? (
+        <p className="text-sm text-ink-soft text-center py-4">
+          No products yet — add your first item with the form above and it
+          appears on your shop&apos;s rate board instantly.
+        </p>
+      ) : (
       <ul className="divide-y divide-line">
         {products.map((p) => (
           <li key={p.id} className="py-3">
@@ -693,6 +699,7 @@ function InventoryPane({
           </li>
         ))}
       </ul>
+      )}
     </div>
   );
 }
