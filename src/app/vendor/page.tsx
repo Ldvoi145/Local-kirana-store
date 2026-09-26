@@ -14,6 +14,7 @@ import {
   updateSuggestionStatus,
 } from "@/app/actions/shop";
 import { ClaimButton, CreateShopForm, DeleteShopButton } from "@/components/shop-setup";
+import { VendorLiveListener } from "@/components/vendor-live-listener";
 import { AddProductForm } from "@/components/inventory-forms";
 import { ShopQR } from "@/components/shop-qr";
 import { ExportCsvButton } from "@/components/export-csv";
@@ -119,6 +120,7 @@ export default async function VendorPage({
 
   return (
     <div className="space-y-4">
+      <VendorLiveListener key={shop.id} shopId={shop.id} />
       <section className="rounded-2xl bg-counter border border-line p-5">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex-1 min-w-52">
