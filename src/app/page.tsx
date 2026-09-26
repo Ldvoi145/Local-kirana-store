@@ -37,7 +37,7 @@ export default async function Home({
 async function ShopList() {
   const shops = await getShops();
   if (shops.length === 0)
-    return <EmptyState text="No shops yet. Run supabase/schema.sql to seed the demo stores." />;
+    return <EmptyState text="No shops yet. Vendors add their first store from the Vendor page." />;
   return (
     <section className="space-y-3">
       <h2 className="font-display font-bold text-2xl">Nearby shops</h2>
